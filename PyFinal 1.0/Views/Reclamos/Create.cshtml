@@ -1,0 +1,65 @@
+﻿@model PyFinal_1.ViewModels.Reclamos.CrearReclamoVM
+@{
+    ViewData["Title"] = "Registrar reclamo";
+}
+
+<div class="card-reclamo">
+    <h2>Registrar reclamo</h2>
+    <p class="subtitle">Complete los datos. Recibirá un código único de seguimiento.</p>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
+
+        <div class="col-md-4">
+            <label asp-for="Dni" class="form-label"></label>
+            <input asp-for="Dni" class="form-control" maxlength="8" />
+            <span asp-validation-for="Dni" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-8">
+            <label asp-for="NombreCompleto" class="form-label"></label>
+            <input asp-for="NombreCompleto" class="form-control" />
+            <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Correo" class="form-label"></label>
+            <input asp-for="Correo" class="form-control" />
+            <span asp-validation-for="Correo" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="TipoReclamo" class="form-label"></label>
+            <select asp-for="TipoReclamo" class="form-select">
+                <option value="">-- Seleccione --</option>
+                <option value="Facturacion">Facturación</option>
+                <option value="Cobertura">Cobertura del servicio</option>
+                <option value="Atencion">Atención al cliente</option>
+                <option value="Equipos">Equipos / SIM</option>
+            </select>
+            <span asp-validation-for="TipoReclamo" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Descripcion" class="form-label"></label>
+            <textarea asp-for="Descripcion" class="form-control" rows="5"></textarea>
+            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Evidencia" class="form-label"></label>
+            <input asp-for="Evidencia" type="file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" />
+            <div class="form-text">Opcional. Formatos permitidos: JPG, PNG, PDF (máx. 5 MB).</div>
+            <span asp-validation-for="Evidencia" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Registrar reclamo</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

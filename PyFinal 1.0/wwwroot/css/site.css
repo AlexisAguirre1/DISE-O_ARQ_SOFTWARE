@@ -1,0 +1,96 @@
+:root
+{
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --radius: 10px;
+}
+
+body
+{
+    background: var(--bg);
+}
+
+.card-reclamo 
+{
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    padding: 28px 32px;
+    max-width: 1000px;
+    margin: 32px auto;
+}
+
+    .card-reclamo h2
+    {
+        margin-top: 0;
+    }
+
+    .card-reclamo .subtitle 
+    {
+        color: var(--muted);
+        margin-top: -8px;
+        margin-bottom: 24px;
+        font-size: .92rem;
+    }
+
+    .card-reclamo .form-control,
+    .card-reclamo .form-select 
+    {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .card-reclamo .form-control:focus,
+        .card-reclamo .form-select:focus 
+        {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+        }
+
+    .card-reclamo label {
+        font-weight: 600;
+        font-size: .88rem;
+        margin-bottom: 6px;
+    }
+
+    .card-reclamo .btn-primary 
+    {
+        background: var(--primary);
+        border-color: var(--primary);
+        font-weight: 600;
+        padding: 10px 22px;
+        border-radius: 8px;
+    }
+
+   .card-reclamo .btn-primary:hover 
+   {
+       background: var(--primary-dark);
+       border-color: var(--primary-dark);
+   }
+
+.badge-code 
+{
+    font-family: monospace;
+    background: #eef2ff;
+    color: var(--primary-dark);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+.card-reclamo.ancha
+{
+    max-width: 1000px;
+}
+
+.card-reclamo .table code 
+{
+    white-space: nowrap;
+}

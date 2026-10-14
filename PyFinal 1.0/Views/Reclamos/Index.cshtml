@@ -1,0 +1,58 @@
+﻿@model List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+@{
+    ViewData["Title"] = "Mis reclamos";
+}
+
+<div class="card-reclamo ancha">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Mis reclamos</h2>
+        <a asp-action="Create" class="btn btn-primary">+ Registrar nuevo reclamo</a>
+    </div>
+
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">Aún no has registrado ningún reclamo.</p>
+    }
+    else
+    {
+        <table class="table align-middle" id="tablaReclamos">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><code>@r.Codigo</code></td>
+                        <td>@r.TipoReclamo</td>
+                        <td>@(r.Descripcion.Length > 40 ? r.Descripcion[..40] + "..." : r.Descripcion)</td>
+                        <td>@r.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                        <td><partial name="_EstadoBadge" model="r.Estado" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const alerta = document.querySelector('.alert-success');
+            if (alerta) {
+                setTimeout(() => { alerta.style.transition = 'opacity .5s'; alerta.style.opacity = '0'; }, 4000);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37111.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PyFinal_1", "PyFinal 1.0\PyFinal_1.csproj", "{2B6DEC49-5623-4B52-93D9-6D0EE20AA0D2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B6DEC49-5623-4B52-93D9-6D0EE20AA0D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B6DEC49-5623-4B52-93D9-6D0EE20AA0D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B6DEC49-5623-4B52-93D9-6D0EE20AA0D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B6DEC49-5623-4B52-93D9-6D0EE20AA0D2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7A825959-26DE-4556-AEB6-0E9FE6CFE898}
+	EndGlobalSection
+EndGlobal

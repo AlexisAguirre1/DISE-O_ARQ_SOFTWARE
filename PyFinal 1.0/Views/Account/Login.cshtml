@@ -1,0 +1,262 @@
+﻿@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<style>
+    .login-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 650px;
+        margin: 25px auto;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .login-left {
+        background: linear-gradient(145deg, #e8f2ff, #b9d7ff);
+        padding: 65px 45px;
+    }
+
+    .login-left h1 {
+        color: #101b3e;
+        font-size: 36px;
+        font-weight: 750;
+    }
+
+    .login-left .subtitle {
+        color: #405b80;
+        font-size: 17px;
+        margin-top: 15px;
+        margin-bottom: 35px;
+    }
+
+    .feature {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 27px;
+    }
+
+    .feature-icon {
+        background: white;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .feature p {
+        margin: 0;
+        color: #526887;
+        font-size: 14px;
+    }
+
+    .login-right {
+        background: #f8fbff;
+        padding: 45px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background: white;
+        width: 100%;
+        max-width: 450px;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+    }
+
+    .login-card h2 {
+        text-align: center;
+        font-weight: 750;
+        color: #101b3e;
+    }
+
+    .login-card .description {
+        text-align: center;
+        color: #718096;
+        margin-bottom: 35px;
+    }
+
+    .login-card .form-control {
+        padding: 12px;
+        border-radius: 7px;
+    }
+
+    .login-button {
+        width: 100%;
+        background: #1769ef;
+        color: white;
+        border: none;
+        padding: 13px;
+        border-radius: 7px;
+        font-weight: 600;
+    }
+
+    .login-button:hover {
+        background: #0954c9;
+    }
+
+    @@media (max-width: 768px) {
+        .login-container {
+            grid-template-columns: 1fr;
+        }
+
+        .login-left, .login-right {
+            padding: 30px;
+        }
+    }
+</style>
+
+<div class="login-container">
+
+    <!-- LADO IZQUIERDO -->
+    <div class="login-left">
+
+        <h1>
+            Bienvenido al sistema de reclamos
+        </h1>
+
+        <p class="subtitle">
+            Gestiona, realiza y da seguimiento a tus
+            reclamos de manera fácil, rápida y segura.
+        </p>
+
+        <div class="feature">
+            <div class="feature-icon">📋</div>
+            <div>
+                <strong>Registra tu reclamo</strong>
+                <p>Cuéntanos tu situación de forma simple.</p>
+            </div>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">🔍</div>
+            <div>
+                <strong>Da seguimiento</strong>
+                <p>Revisa el estado de tus reclamos.</p>
+            </div>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">🛡️</div>
+            <div>
+                <strong>Información segura</strong>
+                <p>Protege tu información personal.</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <div style="font-size: 110px;">👩‍💻</div>
+            <strong class="text-primary">
+                Centro de atención al cliente
+            </strong>
+        </div>
+
+    </div>
+
+    <!-- LADO DERECHO -->
+    <div class="login-right">
+
+        <div class="login-card">
+
+            <h2>Iniciar sesión</h2>
+
+            <p class="description">
+                Accede a tu cuenta para gestionar tus reclamos.
+            </p>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-warning">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form action="/Account/Login" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label for="correo" class="form-label fw-bold">
+                        Correo electrónico
+                    </label>
+
+                    <input type="email"
+                           id="correo"
+                           name="correo"
+                           class="form-control"
+                           placeholder="ejemplo@correo.com"
+                           autocomplete="username"
+                           required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label fw-bold">
+                        Contraseña
+                    </label>
+
+                    <div class="input-group">
+
+                        <input type="password"
+                               id="contrasena"
+                               name="contrasena"
+                               class="form-control"
+                               placeholder="Tu contraseña"
+                               autocomplete="current-password"
+                               required />
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="mostrarPassword()">
+                            👁
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="recordarme" />
+
+                    <label class="form-check-label"
+                           for="recordarme">
+                        Recordarme
+                    </label>
+                </div>
+
+                <button type="submit" class="login-button">
+                    Ingresar →
+                </button>
+
+                <hr class="my-4" />
+
+                <p class="text-center text-muted">
+                    ¿No tienes cuenta?
+                    <span class="text-primary">
+                        Registro próximamente
+                    </span>
+                </p>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function mostrarPassword() {
+        const input = document.getElementById("contrasena");
+
+        input.type = input.type === "password"
+            ? "text"
+            : "password";
+    }
+</script>

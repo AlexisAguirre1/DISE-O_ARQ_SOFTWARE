@@ -1,0 +1,17 @@
+﻿@model PyFinal_1.Domain.Enums.EstadoReclamo
+@using PyFinal_1.Domain.Enums
+@{
+    var css = Model switch
+    {
+        EstadoReclamo.Registrado => "bg-secondary",
+        EstadoReclamo.EnEvaluacion => "bg-info text-dark",
+        EstadoReclamo.Aprobado => "bg-primary",
+        EstadoReclamo.Rechazado => "bg-danger",
+        EstadoReclamo.Impugnado => "bg-warning text-dark",
+        EstadoReclamo.Resuelto => "bg-success",
+        EstadoReclamo.Cerrado => "bg-dark",
+        EstadoReclamo.EnProceso => "bg-primary",
+        _ => "bg-light text-dark"
+    };
+}
+<span class="badge @css">@Model</span>

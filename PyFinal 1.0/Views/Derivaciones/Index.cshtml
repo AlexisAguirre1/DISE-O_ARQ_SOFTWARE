@@ -1,0 +1,47 @@
+﻿@model List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+@{
+    ViewData["Title"] = "Reclamos por derivar";
+}
+
+<div class="card-reclamo ancha">
+    <h2 class="mb-3">Reclamos por derivar</h2>
+
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No hay reclamos pendientes de derivación.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><code>@r.Codigo</code></td>
+                        <td>@r.TipoReclamo</td>
+                        <td>@r.Descripcion</td>
+                        <td>@r.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <a asp-action="Derivar" asp-route-codigo="@r.Codigo"
+                               class="btn btn-sm btn-primary">Derivar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

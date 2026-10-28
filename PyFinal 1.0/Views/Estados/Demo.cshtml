@@ -1,0 +1,52 @@
+﻿@model PyFinal_1.ViewModels.Estados.DemoEstadoVM
+@{
+    ViewData["Title"] = "Derivacion Demo";
+}
+
+<div class="card-reclamo">
+    <h2>Derivacion del Reclamo</h2>
+    <p class="subtitle">Elija un estado y una acción. El estado decide si la transición es válida.</p>
+
+    <form asp-action="Demo" method="post" class="row g-3">
+        <div class="col-md-5">
+            <label asp-for="EstadoInicial" class="form-label">Estado actual del reclamo</label>
+            <select asp-for="EstadoInicial" class="form-select"
+                    asp-items="Html.GetEnumSelectList<EstadoReclamo>()"></select>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Accion" class="form-label">Acción a ejecutar</label>
+            <select asp-for="Accion" class="form-select">
+                <option value="Evaluar">Evaluar</option>
+                <option value="Derivar">Derivar a operario</option>
+                <option value="Resolver">Resolver</option>
+                <option value="Cerrar">Cerrar</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="HayOperarioLibre" class="form-check-input" />
+                <label asp-for="HayOperarioLibre" class="form-check-label">Hay operario libre</label>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Ejecutar</button>
+        </div>
+    </form>
+
+    @if (Model.Ejecutado)
+    {
+        <hr />
+        <div class="alert @(Model.Exito ? "alert-success" : "alert-danger")">
+            @Model.Mensaje
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <partial name="_EstadoBadge" model="Model.EstadoInicial" />
+            <span>→</span>
+            <partial name="_EstadoBadge" model="Model.EstadoFinal" />
+        </div>
+    }
+</div>

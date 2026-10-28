@@ -1,0 +1,70 @@
+﻿@model PyFinal_1.ViewModels.Evaluaciones.DerivarReclamoVM
+@{
+    ViewData["Title"] = "Derivar reclamo";
+}
+
+<div class="card-reclamo ancha">
+    <h2>Derivar reclamo @Model.Codigo</h2>
+    <p class="subtitle">@Model.TipoReclamo, registrado el @Model.FechaRegistro.ToString("dd/MM/yyyy")</p>
+    <p>@Model.Descripcion</p>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <h5 class="mt-4">Operarios de @Model.TipoReclamo</h5>
+
+    @if (!Model.Encargados.Any())
+    {
+        <p class="text-muted">No hay operarios registrados para este tipo.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Operario</th>
+                    <th>Especialidad</th>
+                    <th>Disponibilidad</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Encargados)
+                {
+                    <tr>
+                        <td>@e.Nombre</td>
+                        <td>@e.TipoEncargado</td>
+                        <td>
+                            @if (e.Disponible)
+                            {
+                                <span class="badge bg-success">Libre</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Ocupado</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (e.Disponible && Model.PuedeDerivar)
+                            {
+                                <form asp-action="Confirmar" method="post" class="d-inline">
+                                    <input type="hidden" name="codigo" value="@Model.Codigo" />
+                                    <input type="hidden" name="operarioId" value="@e.Id" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Derivar a este operario</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <div class="alert @(Model.PuedeDerivar ? "alert-success" : "alert-warning")">
+        @Model.Mensaje
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+</div>

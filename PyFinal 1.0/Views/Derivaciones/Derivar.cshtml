@@ -1,70 +1,685 @@
-﻿@model PyFinal_1.ViewModels.Evaluaciones.DerivarReclamoVM
+﻿@model PyFinal_1.Controllers.DerivacionFormularioVista
+
 @{
-    ViewData["Title"] = "Derivar reclamo";
+    Layout = null;
+    ViewData["Title"] = "Asignar Reclamo - Cliente360";
+
+    string nombre = User.Identity?.Name ?? "Supervisor";
+
+    bool hayOperarios = Model.Operarios != null
+        && Model.Operarios.Count > 0;
+
+    string fecha = Model.Fecha?.ToString("dd/MM/yyyy")
+        ?? "Sin fecha";
 }
 
-<div class="card-reclamo ancha">
-    <h2>Derivar reclamo @Model.Codigo</h2>
-    <p class="subtitle">@Model.TipoReclamo, registrado el @Model.FechaRegistro.ToString("dd/MM/yyyy")</p>
-    <p>@Model.Descripcion</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
 
-    <h5 class="mt-4">Operarios de @Model.TipoReclamo</h5>
+    <title>Asignar Reclamo - Cliente360</title>
 
-    @if (!Model.Encargados.Any())
-    {
-        <p class="text-muted">No hay operarios registrados para este tipo.</p>
-    }
-    else
-    {
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Operario</th>
-                    <th>Especialidad</th>
-                    <th>Disponibilidad</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var e in Model.Encargados)
-                {
-                    <tr>
-                        <td>@e.Nombre</td>
-                        <td>@e.TipoEncargado</td>
-                        <td>
-                            @if (e.Disponible)
-                            {
-                                <span class="badge bg-success">Libre</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Ocupado</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            @if (e.Disponible && Model.PuedeDerivar)
-                            {
-                                <form asp-action="Confirmar" method="post" class="d-inline">
-                                    <input type="hidden" name="codigo" value="@Model.Codigo" />
-                                    <input type="hidden" name="operarioId" value="@e.Id" />
-                                    <button type="submit" class="btn btn-sm btn-primary">Derivar a este operario</button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #101b3e;
+            background: #f3f7ff;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* MENU LATERAL */
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            padding: 28px 14px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 14px;
+            margin-bottom: 55px;
+            font-size: 24px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            height: 32px;
+            display: flex;
+            align-items: end;
+            gap: 3px;
+        }
+
+            .logo-icon span {
+                width: 9px;
+                border-radius: 4px;
+                background: linear-gradient(#20c8f7, #0963f6);
+            }
+
+                .logo-icon span:nth-child(1) {
+                    height: 15px;
                 }
-            </tbody>
-        </table>
-    }
 
-    <div class="alert @(Model.PuedeDerivar ? "alert-success" : "alert-warning")">
-        @Model.Mensaje
+                .logo-icon span:nth-child(2) {
+                    height: 24px;
+                }
+
+                .logo-icon span:nth-child(3) {
+                    height: 32px;
+                }
+
+        .logo-360 {
+            color: #1589fa;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 17px 20px;
+                border-radius: 13px;
+                text-decoration: none;
+                color: #263c64;
+                transition: .3s;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient(120deg, #e8f2ff, #dff7ff);
+                    border-left: 4px solid #0866f5;
+                    font-weight: 700;
+                    color: #0866f5;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .logout {
+            border: none;
+            background: transparent;
+            color: #df4760;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* CONTENIDO */
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient(110deg, #3288fb, #8fe4f4);
+            padding: 18px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffffdd;
+            border-radius: 35px;
+            padding: 10px 18px;
+            color: #183762;
+        }
+
+            .account small {
+                display: block;
+                color: #7184a4;
+                margin-top: 4px;
+            }
+
+        .content {
+            max-width: 1300px;
+            margin: auto;
+            padding: 35px;
+        }
+
+        .hero {
+            margin-bottom: 30px;
+            animation: aparecer .6s ease both;
+        }
+
+            .hero h1 {
+                margin: 0 0 12px;
+                font-size: 38px;
+            }
+
+            .hero p {
+                color: #7184a4;
+                line-height: 1.7;
+            }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+            .card h2 {
+                font-size: 23px;
+                margin: 0 0 12px;
+            }
+
+        .subtitle {
+            color: #7184a4;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        /* INFORMACION DEL RECLAMO */
+
+        .codigo {
+            display: inline-block;
+            background: #fff0f8;
+            color: #ed1683;
+            padding: 11px 15px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+            margin-bottom: 20px;
+        }
+
+        .info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 18px;
+            border-radius: 13px;
+            background: #f5f9ff;
+        }
+
+            .info-item small {
+                display: block;
+                color: #7184a4;
+                margin-bottom: 9px;
+            }
+
+            .info-item strong {
+                font-size: 15px;
+                overflow-wrap: anywhere;
+            }
+
+        .description {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid #e1ebf8;
+        }
+
+            .description strong {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .description p {
+                color: #536987;
+                line-height: 1.8;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                margin: 0;
+            }
+
+        /* FORMULARIO DE DERIVACION */
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 10px;
+                font-size: 15px;
+                font-weight: 700;
+            }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border-radius: 13px;
+            border: 1px solid #dce8f8;
+            background: #f5f9ff;
+            font-size: 15px;
+            color: #263c64;
+            outline: none;
+            transition: .3s;
+        }
+
+            .form-control:focus {
+                border-color: #2583fc;
+                background: white;
+                box-shadow: 0 0 0 4px #2583fc1a;
+            }
+
+        .note {
+            background: #edf6ff;
+            padding: 18px;
+            border-radius: 13px;
+            color: #536d94;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+
+        .warning {
+            background: #fff5e6;
+            color: #99611c;
+            padding: 17px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            background: #fff0f2;
+            color: #b33650;
+            padding: 15px 18px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-confirmar {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(120deg, #2583fc, #0056f5);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+            .btn-confirmar:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px #0866f54d;
+            }
+
+            .btn-confirmar:disabled {
+                opacity: .5;
+                cursor: not-allowed;
+            }
+
+        .btn-volver {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 22px;
+            border-radius: 12px;
+            background: #edf4ff;
+            color: #1769ef;
+            text-decoration: none;
+            font-weight: 700;
+            transition: .3s;
+        }
+
+            .btn-volver:hover {
+                background: #dfedff;
+            }
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@media (max-width: 1000px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .logo {
+                margin-bottom: 20px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .content {
+                padding: 18px;
+            }
+
+            .topbar {
+                padding: 15px;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- MENU LATERAL -->
+
+        <aside class="sidebar">
+
+            <div class="logo">
+                <div class="logo-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <span>
+                    Cliente<span class="logo-360">360</span>
+                </span>
+            </div>
+
+            <nav class="menu">
+
+                <a href="@Url.Action("Index", "Home")">
+                    🏠 Home
+                </a>
+
+                <a href="@Url.Action("Index", "Reclamos")">
+                    📋 Reclamos
+                </a>
+
+                <a href="@Url.Action("Index", "Seguimiento")">
+                    🔎 Seguimiento
+                </a>
+
+                <a href="@Url.Action("Index", "Derivaciones")"
+                   class="active">
+                    🔄 Derivación
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+                <form method="post"
+                      action="@Url.Action("Logout", "Account")">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit" class="logout">
+                        🚪 Cerrar sesión
+                    </button>
+                </form>
+            </div>
+
+        </aside>
+
+        <!-- ZONA PRINCIPAL -->
+
+        <div class="workspace">
+
+            <header class="topbar">
+
+                <strong>Centro de atención al cliente</strong>
+
+                <div class="account">
+                    <span>👤</span>
+
+                    <div>
+                        <strong>@nombre</strong>
+                        <small>Supervisor</small>
+                    </div>
+                </div>
+
+            </header>
+
+            <main class="content">
+
+                <!-- CABECERA -->
+
+                <section class="hero">
+                    <h1>🔄 Asignar reclamo</h1>
+
+                    <p>
+                        Selecciona un operario para que se encargue
+                        de la atención del reclamo.
+                    </p>
+                </section>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert-error">
+                        ⚠️ @TempData["Error"]
+                    </div>
+                }
+
+                <div class="layout">
+
+                    <!-- INFORMACION DEL RECLAMO -->
+
+                    <section class="card">
+
+                        <h2>📋 Información del reclamo</h2>
+
+                        <p class="subtitle">
+                            Verifica los datos antes de realizar la asignación.
+                        </p>
+
+                        <span class="codigo">
+                            @Model.Codigo
+                        </span>
+
+                        <div class="info">
+
+                            <div class="info-item">
+                                <small>Tipo de reclamo</small>
+                                <strong>@Model.Tipo</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <small>Fecha de registro</small>
+                                <strong>@fecha</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <small>Solicitante</small>
+                                <strong>@Model.Solicitante</strong>
+                            </div>
+
+                            <div class="info-item">
+                                <small>Estado de asignación</small>
+                                <strong>Pendiente de derivación</strong>
+                            </div>
+
+                        </div>
+
+                        <div class="description">
+
+                            <strong>📝 Descripción del problema</strong>
+
+                            <p>@Model.Descripcion</p>
+
+                        </div>
+
+                    </section>
+
+                    <!-- FORMULARIO -->
+
+                    <section class="card">
+
+                        <h2>👨‍💻 Asignar a un operario</h2>
+
+                        <p class="subtitle">
+                            Elige al personal encargado de atender este reclamo.
+                        </p>
+
+                        <div class="note">
+                            ℹ️ Los operarios disponibles corresponden
+                            al tipo de reclamo seleccionado.
+                        </div>
+
+                        @if (!hayOperarios)
+                        {
+                            <div class="warning">
+                                ⚠️ No se encontraron operarios
+                                disponibles para este tipo de reclamo.
+                                No es posible confirmar la derivación.
+                            </div>
+                        }
+
+                        <form method="post"
+                              action="@Url.Action("Confirmar", "Derivaciones")"
+                              onsubmit="return confirm('¿Confirmar la asignación de este reclamo?');">
+
+                            @Html.AntiForgeryToken()
+
+                            <!-- CODIGO DEL RECLAMO -->
+
+                            <input type="hidden"
+                                   name="codigo"
+                                   value="@Model.Codigo" />
+
+                            <!-- OPERARIO SELECCIONADO -->
+
+                            <div class="form-group">
+
+                                <label for="operarioId">
+                                    Operario responsable
+                                </label>
+
+                                <select name="operarioId"
+                                        id="operarioId"
+                                        class="form-control"
+                                        required
+                                        disabled="@(!hayOperarios)">
+
+                                    <option value="">
+                                        -- Selecciona un operario --
+                                    </option>
+
+                                    @if (Model.Operarios != null)
+                                    {
+                                        @foreach (var operario in Model.Operarios)
+                                        {
+                                            <option value="@operario.Id">
+                                                @operario.Nombre
+                                            </option>
+                                        }
+                                    }
+
+                                </select>
+
+                            </div>
+
+                            <div class="actions">
+
+                                <a href="@Url.Action("Index", "Derivaciones")"
+                                   class="btn-volver">
+                                    ← Volver
+                                </a>
+
+                                <button type="submit"
+                                        class="btn-confirmar"
+                                        disabled="@(!hayOperarios)">
+                                    ✅ Confirmar derivación
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </section>
+
+                </div>
+
+            </main>
+
+        </div>
+
     </div>
 
-    <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
-</div>
+</body>
+</html>

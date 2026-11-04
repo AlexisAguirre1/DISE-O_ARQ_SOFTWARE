@@ -1,8 +1,786 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    Layout = null;
+    ViewData["Title"] = "Inicio - Cliente360";
+
+    string nombre = User.Identity?.Name ?? "Usuario";
+
+    bool solicitante = User.IsInRole("Solicitante");
+    bool supervisor = User.IsInRole("Supervisor");
+    bool operario = User.IsInRole("Operario");
+
+    string rol = supervisor ? "Supervisor"
+        : operario ? "Operario"
+        : solicitante ? "Solicitante"
+        : "Usuario";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>Inicio - Cliente360</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* MENU LATERAL */
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: white;
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 22px;
+            font-weight: 800;
+            padding: 0 11px;
+            margin-bottom: 55px;
+            color: #0f1f4d;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+        }
+
+        .logo-360 {
+            color: #1e89ff;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 17px 20px;
+                border-radius: 13px;
+                text-decoration: none;
+                color: #263c64;
+                transition: .3s ease;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient( 120deg, #e8f2ff, #dff7ff);
+                    color: #0866f5;
+                    border-left: 4px solid #0866f5;
+                    font-weight: 700;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .logout-button {
+            border: none;
+            padding: 0;
+            background: transparent;
+            color: #df4760;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ZONA PRINCIPAL */
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient( 110deg, #3288fb, #8fe4f4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 18px 35px;
+            color: white;
+        }
+
+            .topbar strong {
+                font-size: 18px;
+            }
+
+        .account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffffdd;
+            color: #183762;
+            border-radius: 35px;
+            padding: 8px 18px 8px 9px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #dceaff;
+            font-size: 22px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #7085a4;
+        }
+
+        .content {
+            padding: 35px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        /* BIENVENIDA */
+
+        .welcome {
+            position: relative;
+            overflow: hidden;
+            padding: 48px;
+            border-radius: 24px;
+            background: linear-gradient( 120deg, #e7f2ff, #d9f6ff);
+            box-shadow: 0 8px 25px #dce6f54d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            animation: aparecer .7s ease both;
+        }
+
+        .welcome-label {
+            display: inline-block;
+            padding: 9px 15px;
+            background: white;
+            color: #1769ef;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .welcome h1 {
+            margin: 0 0 16px;
+            font-size: 38px;
+            font-weight: 800;
+            color: #101f48;
+        }
+
+        .welcome p {
+            max-width: 650px;
+            margin: 0;
+            color: #62799a;
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .welcome-icon {
+            font-size: 95px;
+            flex-shrink: 0;
+            animation: flotar 4s ease-in-out infinite;
+        }
+
+        /* TITULOS */
+
+        .section-title {
+            margin: 35px 0 22px;
+        }
+
+            .section-title h2 {
+                margin: 0 0 8px;
+                font-size: 26px;
+            }
+
+            .section-title p {
+                margin: 0;
+                color: #7184a4;
+            }
+
+        /* TARJETAS */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px #dce6f54d;
+            transition: .3s ease;
+            animation: aparecer .7s ease both;
+        }
+
+            .card:hover {
+                transform: translateY(-7px);
+                box-shadow: 0 12px 30px #bed4f580;
+            }
+
+        .card-icon {
+            width: 65px;
+            height: 65px;
+            display: grid;
+            place-items: center;
+            border-radius: 17px;
+            background: #e8f2ff;
+            font-size: 30px;
+            margin-bottom: 22px;
+        }
+
+        .card.seguimiento .card-icon {
+            background: #def8ef;
+        }
+
+        .card.nuevo .card-icon {
+            background: #fff3d7;
+        }
+
+        .card.atencion .card-icon {
+            background: #e0f5ff;
+        }
+
+        .card.derivacion .card-icon {
+            background: #eee8ff;
+        }
+
+        .card h3 {
+            font-size: 21px;
+            margin: 0 0 12px;
+        }
+
+        .card p {
+            color: #7184a4;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0 0 24px;
+            flex: 1;
+        }
+
+        .card a {
+            display: inline-block;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: linear-gradient( 120deg, #2583fc, #0056f5);
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            text-align: center;
+            transition: .3s ease;
+        }
+
+            .card a:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 18px #0866f53b;
+            }
+
+        /* INFORMACION */
+
+        .info-panel {
+            margin-top: 32px;
+            padding: 28px 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+            .info-panel h3 {
+                font-size: 21px;
+                margin: 0 0 12px;
+            }
+
+            .info-panel p {
+                color: #7184a4;
+                line-height: 1.8;
+                margin: 0;
+            }
+
+        /* ANIMACIONES */
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@keyframes flotar {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* RESPONSIVE */
+
+        @@media (max-width: 1100px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .logo {
+                margin-bottom: 20px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .sidebar-bottom {
+                padding: 15px 20px;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .topbar {
+                padding: 15px;
+                flex-wrap: wrap;
+            }
+
+            .welcome {
+                padding: 28px;
+            }
+
+                .welcome h1 {
+                    font-size: 29px;
+                }
+
+            .welcome-icon {
+                display: none;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- MENU LATERAL -->
+
+        <aside class="sidebar">
+
+            <div class="logo">
+
+                <svg class="logo-icon"
+                     viewBox="0 0 48 48"
+                     role="img"
+                     aria-label="Logo Cliente360">
+
+                    <defs>
+                        <linearGradient id="logo-c360"
+                                        x1="0" y1="1"
+                                        x2="1" y2="0">
+                            <stop offset="0%" stop-color="#11d0ed" />
+                            <stop offset="100%" stop-color="#1357f6" />
+                        </linearGradient>
+                    </defs>
+
+                    <path d="M5 30 Q5 27 8 26 L13 25 Q16 24 16 28 L16 40 Q16 43 13 43 L8 43 Q5 43 5 40Z"
+                          fill="#19baf6" />
+
+                    <path d="M19 21 Q19 18 22 17 L27 16 Q30 15 30 19 L30 40 Q30 43 27 43 L22 43 Q19 43 19 40Z"
+                          fill="#2789fd" />
+
+                    <path d="M33 11 Q33 8 36 7 L41 5 Q44 4 44 8 L44 40 Q44 43 41 43 L36 43 Q33 43 33 40Z"
+                          fill="url(#logo-c360)" />
+
+                </svg>
+
+                <span>
+                    Cliente<span class="logo-360">360</span>
+                </span>
+
+            </div>
+
+            <nav class="menu">
+
+                <!-- HOME -->
+
+                <a href="@Url.Action("Index", "Home")"
+                   class="active">
+                    🏠 Home
+                </a>
+
+                <!-- MIS RECLAMOS -->
+
+                <a href="@Url.Action("Index", "Reclamos")">
+                    📋 Mis Reclamos
+                </a>
+
+                <!-- NUEVO RECLAMO -->
+                @if (solicitante)
+                {
+                    <a href="@Url.Action("Create", "Reclamos")">
+                        ➕ Nuevo Reclamo
+                    </a>
+                }
+
+                <!-- SEGUIMIENTO -->
+                @if (solicitante || supervisor)
+                {
+                    <a href="@Url.Action("Index", "Seguimiento")">
+                        🔎 Seguimiento
+                    </a>
+                }
+
+                <!-- ATENCION DEL OPERARIO -->
+                @if (operario)
+                {
+                    <a href="@Url.Action("Index", "Atencion")">
+                        🛠️ Atención de reclamos
+                    </a>
+                }
+
+                <!-- DERIVACION DEL SUPERVISOR -->
+                @if (supervisor)
+                {
+                    <a href="@Url.Action("Index", "Derivaciones")">
+                        🔄 Derivación
+                    </a>
+                }
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <form method="post"
+                      action="@Url.Action("Logout", "Account")">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="logout-button">
+                        🚪 Cerrar sesión
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+        <!-- AREA PRINCIPAL -->
+
+        <div class="workspace">
+
+            <header class="topbar">
+
+                <strong>
+                    Centro de atención al cliente
+                </strong>
+
+                <div class="account">
+
+                    <div class="avatar">
+                        👤
+                    </div>
+
+                    <div class="user-info">
+
+                        <span class="user-name">
+                            @nombre
+                        </span>
+
+                        <span class="user-role">
+                            @rol
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+            <main class="content">
+
+                <!-- BIENVENIDA -->
+
+                <section class="welcome">
+
+                    <div>
+
+                        <span class="welcome-label">
+                            ✨ Panel de inicio
+                        </span>
+
+                        <h1>
+                            ¡Bienvenido, @nombre!
+                        </h1>
+
+                        <p>
+                            Bienvenido al Sistema de Gestión de
+                            Reclamos de Cliente360.
+
+                            Desde aquí podrás consultar las funciones
+                            disponibles para tu cuenta y realizar
+                            las actividades correspondientes a tu rol.
+                        </p>
+
+                    </div>
+
+                    <div class="welcome-icon">
+                        👨‍💻
+                    </div>
+
+                </section>
+
+                <!-- ACCESOS RAPIDOS -->
+
+                <div class="section-title">
+
+                    <h2>🚀 Accesos rápidos</h2>
+
+                    <p>
+                        Selecciona la función que deseas utilizar.
+                    </p>
+
+                </div>
+
+                <div class="cards">
+
+                    <!-- MIS RECLAMOS -->
+
+                    <div class="card">
+
+                        <div class="card-icon">
+                            📋
+                        </div>
+
+                        <h3>
+                            Mis Reclamos
+                        </h3>
+
+                        <p>
+                            Consulta los reclamos correspondientes
+                            a tu cuenta y revisa sus detalles
+                            y estados actuales.
+                        </p>
+
+                        <a href="@Url.Action("Index", "Reclamos")">
+                            Ver reclamos →
+                        </a>
+
+                    </div>
+
+                    <!-- REGISTRAR RECLAMO -->
+                    @if (solicitante)
+                    {
+                        <div class="card nuevo">
+
+                            <div class="card-icon">
+                                ➕
+                            </div>
+
+                            <h3>
+                                Registrar Reclamo
+                            </h3>
+
+                            <p>
+                                Registra un nuevo reclamo
+                                completando el formulario
+                                con tus datos y la descripción
+                                del problema.
+                            </p>
+
+                            <a href="@Url.Action("Create", "Reclamos")">
+                                Registrar reclamo →
+                            </a>
+
+                        </div>
+                    }
+
+                    <!-- SEGUIMIENTO -->
+                    @if (solicitante || supervisor)
+                    {
+                        <div class="card seguimiento">
+
+                            <div class="card-icon">
+                                🔎
+                            </div>
+
+                            <h3>
+                                Seguimiento
+                            </h3>
+
+                            <p>
+                                Selecciona un reclamo
+                                y consulta su estado actual
+                                y las etapas del proceso
+                                de atención.
+                            </p>
+
+                            <a href="@Url.Action("Index", "Seguimiento")">
+                                Ver seguimiento →
+                            </a>
+
+                        </div>
+                    }
+
+                    <!-- ATENCION DE RECLAMOS -->
+                    @if (operario)
+                    {
+                        <div class="card atencion">
+
+                            <div class="card-icon">
+                                🛠️
+                            </div>
+
+                            <h3>
+                                Atención de reclamos
+                            </h3>
+
+                            <p>
+                                Consulta los reclamos asignados
+                                a tu cuenta y registra su
+                                resolución cuando hayas
+                                terminado de atenderlos.
+                            </p>
+
+                            <a href="@Url.Action("Index", "Atencion")">
+                                Atender reclamos →
+                            </a>
+
+                        </div>
+                    }
+
+                    <!-- DERIVACION -->
+                    @if (supervisor)
+                    {
+                        <div class="card derivacion">
+
+                            <div class="card-icon">
+                                🔄
+                            </div>
+
+                            <h3>
+                                Derivación
+                            </h3>
+
+                            <p>
+                                Revisa los reclamos pendientes
+                                de evaluación y asígnalos
+                                a los operarios disponibles.
+                            </p>
+
+                            <a href="@Url.Action("Index", "Derivaciones")">
+                                Gestionar derivaciones →
+                            </a>
+
+                        </div>
+                    }
+
+                </div>
+
+                <!-- INFORMACION -->
+
+                <section class="info-panel">
+
+                    <h3>
+                        💡 Información de tu cuenta
+                    </h3>
+
+                    <p>
+                        Has iniciado sesión como
+                        <strong>@nombre</strong>,
+                        con el rol de
+                        <strong>@rol</strong>.
+
+                        Las funciones que aparecen en el menú
+                        dependen de los permisos de tu cuenta.
+                    </p>
+
+                </section>
+
+            </main>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

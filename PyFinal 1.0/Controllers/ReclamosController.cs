@@ -1,33 +1,63 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
 using PyFinal_1.Models;
 using PyFinal_1.ViewModels.Reclamos;
 using PyFinal_1.Domain.Enums;
 using PyFinal_1._0.Domain;
+using System.Security.Claims;
 
 namespace PyFinal_1.Controllers
 {
+    [Authorize(Roles = "Solicitante,Supervisor,Operario")]
     public class ReclamosController : Controller
     {
         private readonly ReclamosDbContext _db;
+        private readonly ILogger<ReclamosController> _logger;
 
-        // PATRÓN SINGLETON
         private readonly ConfiguracionSistema configuracion =
             ConfiguracionSistema.Instancia;
 
-        // Constructor de conexión con SQL Server
-        public ReclamosController(ReclamosDbContext db)
+        public ReclamosController(
+            ReclamosDbContext db,
+            ILogger<ReclamosController> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
-        // MOSTRAR RECLAMOS DESDE SQL SERVER
+        // MOSTRAR RECLAMOS SEGUN ROL
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out int idUsuario))
+            {
+                return Forbid();
+            }
+
+            var consulta = _db.Reclamos.AsNoTracking();
+
+            if (User.IsInRole("Solicitante"))
+            {
+                consulta = consulta.Where(
+                    r => r.IdUsuario == idUsuario);
+            }
+            else if (User.IsInRole("Operario"))
+            {
+                consulta = consulta.Where(
+                    r => r.IdOperario == idUsuario);
+            }
+            else if (!User.IsInRole("Supervisor"))
+            {
+                return Forbid();
+            }
+
             var datos = await (
-                from r in _db.Reclamos.AsNoTracking()
+                from r in consulta
                 join t in _db.TiposReclamo.AsNoTracking()
                     on r.IdTipoReclamo equals t.IdTipoReclamo
                 orderby r.IdReclamo descending
@@ -41,13 +71,14 @@ namespace PyFinal_1.Controllers
                 }
             ).ToListAsync();
 
-            // Convertir los estados de SQL Server
             var reclamos = datos.Select(r => new ListaReclamoVM
             {
                 Codigo = r.CodigoReclamo,
                 TipoReclamo = r.NombreTipo,
                 Descripcion = r.Detalle,
-                FechaRegistro = r.FechaRegistro ?? DateTime.MinValue,
+                FechaRegistro = r.FechaRegistro
+                    ?? DateTime.MinValue,
+
                 Estado = r.IdEstado switch
                 {
                     1 => EstadoReclamo.Registrado,
@@ -62,114 +93,146 @@ namespace PyFinal_1.Controllers
             return View(reclamos);
         }
 
-        // MOSTRAR FORMULARIO
+        // FORMULARIO: SOLO SOLICITANTE
         [HttpGet]
+        [Authorize(Roles = "Solicitante")]
         public IActionResult Create()
         {
             return View(new CrearReclamoVM());
         }
 
-        // REGISTRAR RECLAMO EN SQL SERVER
-        [HttpPost, ValidateAntiForgeryToken]
+        // GUARDAR RECLAMO
+        [HttpPost]
+        [Authorize(Roles = "Solicitante")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CrearReclamoVM vm)
         {
-            // SINGLETON: Validar tipo de reclamo
-            if (!configuracion.EsTipoPermitido(vm.TipoReclamo))
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out int idUsuario))
+            {
+                return Forbid();
+            }
+
+            // VALIDAR TIPO
+            if (string.IsNullOrWhiteSpace(vm.TipoReclamo) ||
+                !configuracion.EsTipoPermitido(vm.TipoReclamo))
             {
                 ModelState.AddModelError(
                     nameof(vm.TipoReclamo),
-                    "Tipo de reclamo no válido."
-                );
+                    "Tipo de reclamo no válido.");
             }
 
-            // SINGLETON: Validar archivos
-            if (vm.Evidencia is not null)
+            // VALIDAR DNI
+            if (string.IsNullOrWhiteSpace(vm.Dni) ||
+                vm.Dni.Length != 8 ||
+                !vm.Dni.All(char.IsAsciiDigit))
+            {
+                ModelState.AddModelError(
+                    nameof(vm.Dni),
+                    "El DNI debe tener 8 números.");
+            }
+
+            // VALIDAR DESCRIPCION
+            if (string.IsNullOrWhiteSpace(vm.Descripcion) ||
+                vm.Descripcion.Trim().Length < 20 ||
+                vm.Descripcion.Length > 500)
+            {
+                ModelState.AddModelError(
+                    nameof(vm.Descripcion),
+                    "La descripción debe tener entre 20 y 500 caracteres.");
+            }
+
+            // VALIDAR EVIDENCIA
+            if (vm.Evidencia != null)
             {
                 var ext = Path.GetExtension(
-                    vm.Evidencia.FileName
-                ).ToLowerInvariant();
+                    vm.Evidencia.FileName).ToLowerInvariant();
 
                 if (!configuracion.EsExtensionPermitida(ext))
                 {
                     ModelState.AddModelError(
                         nameof(vm.Evidencia),
-                        "Formato no permitido. Use JPG, PNG o PDF."
-                    );
+                        "Use JPG, PNG o PDF.");
                 }
                 else if (vm.Evidencia.Length >
                          configuracion.TamanoMaximoBytes)
                 {
                     ModelState.AddModelError(
                         nameof(vm.Evidencia),
-                        "El archivo supera los 5 MB."
-                    );
+                        "El archivo supera el tamaño permitido.");
                 }
                 else
                 {
                     ModelState.AddModelError(
                         nameof(vm.Evidencia),
-                        "Aún no se pueden almacenar evidencias. Registre sin archivo."
-                    );
+                        "La carga de evidencias aún no está disponible.");
                 }
-            }
-
-            // Validar longitud admitida por SQL Server
-            if (vm.Descripcion?.Length > 500)
-            {
-                ModelState.AddModelError(
-                    nameof(vm.Descripcion),
-                    "El detalle no puede superar 500 caracteres."
-                );
             }
 
             if (!ModelState.IsValid)
                 return View(vm);
 
-            // SQL SERVER: Buscar usuario existente
-            var usuarios = await _db.Database.SqlQuery<int>(
-                $"""
-                SELECT [IdUsuario] AS [Value]
-                FROM [dbo].[Usuarios]
-                WHERE [Correo] = {vm.Correo.Trim()}
-                AND [NombresApellidos] = {vm.NombreCompleto.Trim()}
-                """
-            ).Take(2).ToListAsync();
+            // OBTENER USUARIO AUTENTICADO
+            var usuario = await _db.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    u => u.IdUsuario == idUsuario);
 
-            if (usuarios.Count != 1)
+            if (usuario == null)
+                return Forbid();
+
+            // VALIDAR DATOS CONTRA LA CUENTA
+            bool mismoNombre = string.Equals(
+                usuario.NombresApellidos.Trim(),
+                vm.NombreCompleto.Trim(),
+                StringComparison.OrdinalIgnoreCase);
+
+            bool mismoCorreo = string.Equals(
+                usuario.Correo.Trim(),
+                vm.Correo.Trim(),
+                StringComparison.OrdinalIgnoreCase);
+
+            if (!mismoNombre || !mismoCorreo)
             {
                 ModelState.AddModelError(
-                    nameof(vm.Correo),
-                    "Para esta prueba, ingrese los datos de un usuario existente."
-                );
+                    "",
+                    "El nombre y correo deben coincidir con tu cuenta.");
 
                 return View(vm);
             }
 
-            // SQL SERVER: Buscar tipo de reclamo
+            if (string.IsNullOrEmpty(usuario.DNI) ||
+                usuario.DNI != vm.Dni)
+            {
+                ModelState.AddModelError(
+                    nameof(vm.Dni),
+                    "El DNI no coincide con el registrado en tu cuenta.");
+
+                return View(vm);
+            }
+
+            // BUSCAR TIPO
             var tipo = await _db.TiposReclamo
                 .AsNoTracking()
                 .FirstOrDefaultAsync(
-                    t => t.NombreTipo == vm.TipoReclamo
-                );
+                    t => t.NombreTipo == vm.TipoReclamo);
 
             if (tipo == null)
             {
                 ModelState.AddModelError(
                     nameof(vm.TipoReclamo),
-                    "El tipo de reclamo no existe en SQL Server."
-                );
+                    "Tipo de reclamo no encontrado.");
 
                 return View(vm);
             }
 
-            // SQL SERVER: Obtener estado Registrado
-            var estado = "Registrado";
-
-            var idEstado = await _db.Database.SqlQuery<int>(
+            // BUSCAR ESTADO REGISTRADO
+            int idEstado = await _db.Database.SqlQuery<int>(
                 $"""
                 SELECT [IdEstado] AS [Value]
                 FROM [dbo].[EstadosReclamo]
-                WHERE [NombreEstado] = {estado}
+                WHERE [NombreEstado] = {"Registrado"}
                 """
             ).FirstOrDefaultAsync();
 
@@ -177,36 +240,48 @@ namespace PyFinal_1.Controllers
             {
                 ModelState.AddModelError(
                     "",
-                    "No se encontró el estado Registrado."
-                );
+                    "No se encontró el estado Registrado.");
 
                 return View(vm);
             }
 
-            // Generar código de reclamo
-            var codigo = "REC-" +
+            // CREAR RECLAMO
+            string codigo = "REC-" +
                 Guid.NewGuid().ToString("N")[..16];
 
-            // Crear objeto para SQL Server
             var nuevoReclamo = new ReclamoBD
             {
                 CodigoReclamo = codigo,
-                IdUsuario = usuarios[0],
+                IdUsuario = idUsuario,
                 IdTipoReclamo = tipo.IdTipoReclamo,
                 IdEstado = idEstado,
-                Detalle = (vm.Descripcion ?? string.Empty).Trim(),
+                IdOperario = null,
+                Detalle = vm.Descripcion.Trim(),
                 FechaRegistro = DateTime.Now
             };
 
             // GUARDAR EN SQL SERVER
-            _db.Reclamos.Add(nuevoReclamo);
-            await _db.SaveChangesAsync();
+            try
+            {
+                _db.Reclamos.Add(nuevoReclamo);
+                await _db.SaveChangesAsync();
 
-            // Confirmación
-            TempData["Ok"] =
-                $"Reclamo registrado correctamente. Código: {codigo}";
+                TempData["Ok"] =
+                    $"Reclamo registrado correctamente. Código: {codigo}";
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(
+                    ex, "Error guardando reclamo");
+
+                ModelState.AddModelError(
+                    "",
+                    "No se pudo guardar el reclamo.");
+
+                return View(vm);
+            }
         }
     }
 }

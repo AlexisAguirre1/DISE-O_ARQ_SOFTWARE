@@ -1,47 +1,806 @@
-﻿@model List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+﻿@model IEnumerable<PyFinal_1.Controllers.DerivacionPendienteVista>
+
 @{
-    ViewData["Title"] = "Reclamos por derivar";
+    Layout = null;
+    ViewData["Title"] = "Derivación - Cliente360";
+
+    var reclamos = Model?.ToList()
+        ?? new List<PyFinal_1.Controllers.DerivacionPendienteVista>();
+
+    int total = reclamos.Count;
+    int registrados = reclamos.Count(x => x.IdEstado == 1);
+    int evaluacion = reclamos.Count(x => x.IdEstado == 2);
+    int proceso = reclamos.Count(x => x.IdEstado == 3);
+
+    string nombre = User.Identity?.Name ?? "Supervisor";
 }
 
-<div class="card-reclamo ancha">
-    <h2 class="mb-3">Reclamos por derivar</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Derivación - Cliente360</title>
 
-    @if (TempData["Ok"] != null)
-    {
-        <div class="alert alert-success">@TempData["Ok"]</div>
-    }
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-    @if (!Model.Any())
-    {
-        <p class="text-muted">No hay reclamos pendientes de derivación.</p>
-    }
-    else
-    {
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Tipo</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var r in Model)
-                {
-                    <tr>
-                        <td><code>@r.Codigo</code></td>
-                        <td>@r.TipoReclamo</td>
-                        <td>@r.Descripcion</td>
-                        <td>@r.FechaRegistro.ToString("dd/MM/yyyy")</td>
-                        <td>
-                            <a asp-action="Derivar" asp-route-codigo="@r.Codigo"
-                               class="btn btn-sm btn-primary">Derivar</a>
-                        </td>
-                    </tr>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* MENU LATERAL */
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: white;
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            padding: 0 14px;
+            margin-bottom: 55px;
+            color: #101b3e;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: end;
+            gap: 3px;
+            height: 32px;
+        }
+
+            .logo-icon span {
+                display: block;
+                width: 9px;
+                border-radius: 4px;
+                background: linear-gradient(#20c8f7, #0963f6);
+            }
+
+                .logo-icon span:nth-child(1) {
+                    height: 15px;
                 }
-            </tbody>
-        </table>
-    }
-</div>
+
+                .logo-icon span:nth-child(2) {
+                    height: 24px;
+                }
+
+                .logo-icon span:nth-child(3) {
+                    height: 32px;
+                }
+
+        .logo-360 {
+            color: #1589fa;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 17px 20px;
+                border-radius: 13px;
+                color: #263c64;
+                text-decoration: none;
+                transition: .3s;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient(120deg, #e8f2ff, #dff7ff);
+                    color: #0866f5;
+                    border-left: 4px solid #0866f5;
+                    font-weight: 700;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .logout {
+            border: none;
+            background: transparent;
+            color: #dc4762;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* CONTENIDO */
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient(110deg, #3288fb, #8fe4f4);
+            padding: 18px 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            color: white;
+        }
+
+        .account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 18px;
+            border-radius: 35px;
+            background: #ffffffdd;
+            color: #183762;
+        }
+
+            .account small {
+                display: block;
+                color: #7184a4;
+                margin-top: 3px;
+            }
+
+        .content {
+            padding: 35px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        /* CABECERA */
+
+        .hero {
+            margin-bottom: 28px;
+            animation: aparecer .6s ease both;
+        }
+
+            .hero h1 {
+                font-size: 38px;
+                margin: 0 0 12px;
+            }
+
+            .hero p {
+                color: #7184a4;
+                font-size: 16px;
+            }
+
+        /* ESTADISTICAS */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            background: white;
+            padding: 25px;
+            border-radius: 17px;
+            box-shadow: 0 5px 20px #dce6f54d;
+            transition: .3s;
+        }
+
+            .stat:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 30px #bed4f580;
+            }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            font-size: 25px;
+            background: #e8f2ff;
+        }
+
+        .stat:nth-child(2) .stat-icon {
+            background: #e9edf4;
+        }
+
+        .stat:nth-child(3) .stat-icon {
+            background: #dff8fc;
+        }
+
+        .stat:nth-child(4) .stat-icon {
+            background: #fff3d7;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 27px;
+        }
+
+        .stat small {
+            color: #7184a4;
+            font-size: 13px;
+        }
+
+        /* PANEL */
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 8px 25px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+            .panel h2 {
+                margin: 0 0 8px;
+                font-size: 24px;
+            }
+
+            .panel p {
+                color: #8190a8;
+                margin: 0;
+            }
+
+        .search-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 25px 0 20px;
+        }
+
+        .search {
+            flex: 1;
+            max-width: 480px;
+            min-width: 220px;
+            padding: 15px;
+            background: #f5f9ff;
+            border: 1px solid #dce8f8;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+            .search:focus {
+                border-color: #2583fc;
+                box-shadow: 0 0 0 4px #2583fc1a;
+            }
+
+        .filter {
+            padding: 15px;
+            background: #f5f9ff;
+            border: 1px solid #dce8f8;
+            border-radius: 12px;
+            color: #263c64;
+            cursor: pointer;
+        }
+
+        /* TABLA */
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #edf4ff;
+        }
+
+        th, td {
+            padding: 17px;
+            text-align: left;
+        }
+
+        th {
+            color: #263c64;
+        }
+
+        td {
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        tbody tr:hover {
+            background: #f5f9ff;
+        }
+
+        .codigo {
+            color: #ed1683;
+            font-weight: 700;
+        }
+
+        .descripcion {
+            max-width: 300px;
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+        }
+
+        .estado {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 9px;
+            background: #e6f0ff;
+            color: #1769ef;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .btn-derivar {
+            display: inline-block;
+            padding: 12px 17px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #2583fc, #0056f5);
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: .3s;
+        }
+
+            .btn-derivar:hover {
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 7px 16px #0866f54d;
+            }
+
+        .alert {
+            padding: 15px 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .alert-ok {
+            background: #def8ef;
+            color: #11855e;
+        }
+
+        .alert-error {
+            background: #fff0f2;
+            color: #ba3651;
+        }
+
+        .footer {
+            padding-top: 20px;
+            color: #8190a8;
+            font-size: 14px;
+        }
+
+        .empty {
+            padding: 38px;
+            text-align: center;
+            color: #8190a8;
+        }
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@media (max-width: 1100px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .logo {
+                margin-bottom: 20px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .content {
+                padding: 18px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
+
+            .topbar {
+                padding: 15px;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- MENU LATERAL -->
+
+        <aside class="sidebar">
+
+            <div class="logo">
+                <div class="logo-icon">
+                    <span></span><span></span><span></span>
+                </div>
+
+                <span>
+                    Cliente<span class="logo-360">360</span>
+                </span>
+            </div>
+
+            <nav class="menu">
+
+                <a href="@Url.Action("Index", "Home")">
+                    🏠 Home
+                </a>
+
+                <a href="@Url.Action("Index", "Reclamos")">
+                    📋 Reclamos
+                </a>
+
+                <a href="@Url.Action("Index", "Seguimiento")">
+                    🔎 Seguimiento
+                </a>
+
+                <a href="@Url.Action("Index", "Derivaciones")"
+                   class="active">
+                    🔄 Derivación
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <form method="post"
+                      action="@Url.Action("Logout", "Account")">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit" class="logout">
+                        🚪 Cerrar sesión
+                    </button>
+                </form>
+
+            </div>
+
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+
+        <div class="workspace">
+
+            <header class="topbar">
+
+                <strong>Centro de atención al cliente</strong>
+
+                <div class="account">
+                    <span>👤</span>
+
+                    <div>
+                        <strong>@nombre</strong>
+                        <small>Supervisor</small>
+                    </div>
+                </div>
+
+            </header>
+
+            <main class="content">
+
+                <section class="hero">
+                    <h1>🔄 Derivación de reclamos</h1>
+
+                    <p>
+                        Revisa los reclamos pendientes y asígnalos
+                        a los operarios correspondientes.
+                    </p>
+                </section>
+
+                <!-- MENSAJES -->
+                @if (TempData["Ok"] != null)
+                {
+                    <div class="alert alert-ok">
+                        ✅ @TempData["Ok"]
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-error">
+                        ⚠️ @TempData["Error"]
+                    </div>
+                }
+
+                <!-- ESTADISTICAS -->
+
+                <section class="stats">
+
+                    <div class="stat">
+                        <div class="stat-icon">📋</div>
+
+                        <div>
+                            <strong>@total</strong>
+                            <small>Pendientes de derivación</small>
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-icon">📝</div>
+
+                        <div>
+                            <strong>@registrados</strong>
+                            <small>Registrados</small>
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-icon">🔎</div>
+
+                        <div>
+                            <strong>@evaluacion</strong>
+                            <small>En evaluación</small>
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-icon">🕒</div>
+
+                        <div>
+                            <strong>@proceso</strong>
+                            <small>En proceso</small>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- TABLA DE RECLAMOS -->
+
+                <section class="panel">
+
+                    <h2>📁 Reclamos por asignar</h2>
+
+                    <p>
+                        Selecciona un reclamo para derivarlo.
+                    </p>
+
+                    <div class="search-row">
+
+                        <input type="search"
+                               id="buscador"
+                               class="search"
+                               placeholder="🔍 Buscar código, tipo o solicitante..." />
+
+                        <select id="filtroEstado" class="filter">
+                            <option value="Todos">Todos los estados</option>
+                            <option value="Registrado">Registrado</option>
+                            <option value="En evaluación">En evaluación</option>
+                            <option value="En proceso">En proceso</option>
+                        </select>
+
+                    </div>
+
+                    <div class="table-scroll">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Tipo</th>
+                                    <th>Solicitante</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var item in reclamos)
+                                {
+                                    string estado = item.IdEstado switch
+                                    {
+                                        1 => "Registrado",
+                                        2 => "En evaluación",
+                                        3 => "En proceso",
+                                        4 => "Resuelto",
+                                        5 => "Cerrado",
+                                        _ => "Desconocido"
+                                    };
+
+                                    string fecha = item.Fecha?.ToString("dd/MM/yyyy")
+                                    ?? "Sin fecha";
+
+                                    <tr class="reclamo-row"
+                                        data-estado="@estado"
+                                        data-texto="@item.Codigo @item.Tipo @item.Solicitante">
+
+                                        <td class="codigo">
+                                            @item.Codigo
+                                        </td>
+
+                                        <td>
+                                            @item.Tipo
+                                        </td>
+
+                                        <td>
+                                            @item.Solicitante
+                                        </td>
+
+                                        <td class="descripcion">
+                                            @item.Descripcion
+                                        </td>
+
+                                        <td>
+                                            @fecha
+                                        </td>
+
+                                        <td>
+                                            <span class="estado">
+                                                @estado
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <a class="btn-derivar"
+                                               href="@Url.Action("Derivar", "Derivaciones", new { codigo = item.Codigo })">
+                                                Derivar →
+                                            </a>
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (total == 0)
+                    {
+                        <div class="empty">
+                            ✅ No hay reclamos pendientes de derivación.
+                        </div>
+                    }
+
+                    <div class="empty"
+                         id="sinResultados"
+                         style="display:none">
+                        No se encontraron coincidencias.
+                    </div>
+
+                    <div class="footer">
+                        Mostrando
+                        <strong id="cantidadVisible">@total</strong>
+                        de @total reclamos pendientes.
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const buscador = document.getElementById("buscador");
+            const filtro = document.getElementById("filtroEstado");
+
+            const filas = document.querySelectorAll(".reclamo-row");
+
+            const cantidad = document.getElementById("cantidadVisible");
+            const sinResultados = document.getElementById("sinResultados");
+
+            function normalizar(texto) {
+                return (texto || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
+            }
+
+            function filtrar() {
+
+                const texto = normalizar(buscador.value);
+                const estado = filtro.value;
+
+                let visibles = 0;
+
+                filas.forEach(function (fila) {
+
+                    const contenido = normalizar(fila.dataset.texto);
+
+                    const coincideTexto = contenido.includes(texto);
+
+                    const coincideEstado =
+                        estado === "Todos" ||
+                        normalizar(fila.dataset.estado) === normalizar(estado);
+
+                    const mostrar = coincideTexto && coincideEstado;
+
+                    fila.style.display = mostrar ? "" : "none";
+
+                    if (mostrar) {
+                        visibles++;
+                    }
+                });
+
+                cantidad.textContent = visibles;
+
+                sinResultados.style.display =
+                    filas.length > 0 && visibles === 0
+                        ? "block"
+                        : "none";
+            }
+
+            buscador.addEventListener("input", filtrar);
+            filtro.addEventListener("change", filtrar);
+
+            filtrar();
+        });
+    </script>
+
+</body>
+</html>

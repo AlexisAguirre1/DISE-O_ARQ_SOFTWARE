@@ -1,0 +1,942 @@
+﻿@model IEnumerable<PyFinal_1.Controllers.AtencionReclamoVista>
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Atención de Reclamos - Cliente360";
+
+    var reclamos = Model?.ToList()
+        ?? new List<PyFinal_1.Controllers.AtencionReclamoVista>();
+
+    int enProceso = reclamos.Count(r => r.IdEstado == 3);
+    int resueltos = reclamos.Count(r => r.IdEstado == 4);
+
+    string nombre = User.Identity?.Name ?? "Operario";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>Atención de Reclamos - Cliente360</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* MENU LATERAL */
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: white;
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 23px;
+            font-weight: 800;
+            color: #101b3e;
+            padding: 0 13px;
+            margin-bottom: 55px;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: end;
+            gap: 3px;
+            height: 34px;
+        }
+
+            .logo-icon span {
+                width: 9px;
+                border-radius: 4px;
+                background: linear-gradient(#20c8f7, #0963f6);
+            }
+
+                .logo-icon span:nth-child(1) {
+                    height: 15px;
+                }
+
+                .logo-icon span:nth-child(2) {
+                    height: 24px;
+                }
+
+                .logo-icon span:nth-child(3) {
+                    height: 34px;
+                }
+
+        .logo-360 {
+            color: #1589fa;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 17px 20px;
+                border-radius: 13px;
+                text-decoration: none;
+                color: #263c64;
+                transition: .3s;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient( 120deg, #e8f2ff, #dff7ff);
+                    color: #0866f5;
+                    border-left: 4px solid #0866f5;
+                    font-weight: 700;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .logout {
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: #df4760;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* CONTENIDO */
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient( 110deg, #3288fb, #8fe4f4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 35px;
+            color: white;
+        }
+
+        .account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffffdd;
+            border-radius: 35px;
+            color: #183762;
+            padding: 10px 18px;
+        }
+
+            .account small {
+                display: block;
+                color: #7184a4;
+                margin-top: 4px;
+            }
+
+        .content {
+            padding: 35px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        /* CABECERA */
+
+        .hero {
+            margin-bottom: 29px;
+            animation: aparecer .6s ease both;
+        }
+
+            .hero h1 {
+                margin: 0 0 12px;
+                font-size: 38px;
+            }
+
+            .hero p {
+                color: #7184a4;
+                font-size: 16px;
+                line-height: 1.6;
+            }
+
+        /* ESTADISTICAS */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 25px;
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 5px 20px #dce6f54d;
+            transition: .3s;
+        }
+
+            .stat:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 30px #bed4f580;
+            }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            background: #e8f2ff;
+            display: grid;
+            place-items: center;
+            font-size: 25px;
+        }
+
+        .stat:nth-child(2) .stat-icon {
+            background: #fff3d7;
+        }
+
+        .stat:nth-child(3) .stat-icon {
+            background: #def8ef;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 29px;
+        }
+
+        .stat small {
+            font-size: 13px;
+            color: #7184a4;
+        }
+
+        /* PANEL PRINCIPAL */
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 27px;
+            box-shadow: 0 8px 25px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+            .panel h2 {
+                margin: 0 0 8px;
+                font-size: 24px;
+            }
+
+        .panel-subtitle {
+            color: #7184a4;
+            margin: 0 0 24px;
+            line-height: 1.6;
+        }
+
+        .search-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 23px;
+        }
+
+        .search, .filter {
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #dce8f8;
+            background: #f5f9ff;
+            outline: none;
+            font-size: 14px;
+            color: #263c64;
+        }
+
+        .search {
+            flex: 1;
+            max-width: 480px;
+            min-width: 220px;
+        }
+
+            .search:focus, .filter:focus {
+                border-color: #2583fc;
+                box-shadow: 0 0 0 4px #2583fc1a;
+            }
+
+        /* TABLA */
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 920px;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #edf4ff;
+        }
+
+        th, td {
+            padding: 17px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        td {
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        tbody tr:hover {
+            background: #f7faff;
+        }
+
+        .codigo {
+            color: #ed1683;
+            font-weight: 800;
+        }
+
+        .descripcion {
+            max-width: 290px;
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
+
+        .estado {
+            display: inline-block;
+            border-radius: 9px;
+            padding: 8px 12px;
+            background: #e8edf4;
+            color: #4d5d78;
+            font-weight: 700;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+            .estado.proceso {
+                background: #e3efff;
+                color: #0761df;
+            }
+
+            .estado.resuelto {
+                background: #dbf8ec;
+                color: #11855e;
+            }
+
+        /* FORMULARIO DE ATENCION */
+
+        .form-atencion {
+            width: 245px;
+            max-width: 100%;
+        }
+
+            .form-atencion label {
+                display: block;
+                font-weight: 700;
+                font-size: 13px;
+                margin-bottom: 9px;
+            }
+
+        .observacion {
+            display: block;
+            width: 100%;
+            min-height: 88px;
+            padding: 12px;
+            resize: vertical;
+            border: 1px solid #dce8f8;
+            background: #f5f9ff;
+            border-radius: 10px;
+            outline: none;
+            font: inherit;
+            font-size: 13px;
+            color: #263c64;
+        }
+
+            .observacion:focus {
+                background: white;
+                border-color: #2583fc;
+                box-shadow: 0 0 0 3px #2583fc1a;
+            }
+
+        .ayuda {
+            display: block;
+            color: #8190a8;
+            font-size: 11px;
+            margin: 8px 0 13px;
+            line-height: 1.5;
+        }
+
+        .acciones {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .btn-avance, .btn-resolver {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: white;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .btn-avance {
+            background: linear-gradient( 120deg, #3288fb, #0866f5);
+        }
+
+        .btn-resolver {
+            background: linear-gradient( 120deg, #25b98b, #11966c);
+        }
+
+            .btn-avance:hover,
+            .btn-resolver:hover {
+                transform: translateY(-2px);
+                filter: brightness(.97);
+            }
+
+        .sin-acciones {
+            color: #7184a4;
+            font-size: 13px;
+        }
+
+        /* MENSAJES */
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            line-height: 1.6;
+        }
+
+        .alert-ok {
+            background: #def8ef;
+            color: #11855e;
+        }
+
+        .alert-error {
+            background: #fff0f2;
+            color: #ba3651;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px 15px;
+            color: #8190a8;
+        }
+
+        .footer {
+            padding-top: 20px;
+            color: #8190a8;
+            font-size: 13px;
+        }
+
+        /* ANIMACIONES */
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* RESPONSIVE */
+
+        @@media (max-width: 1100px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .logo {
+                margin-bottom: 20px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .content {
+                padding: 18px;
+            }
+
+            .topbar {
+                padding: 15px;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- MENU LATERAL -->
+
+        <aside class="sidebar">
+
+            <div class="logo">
+
+                <div class="logo-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <span>
+                    Cliente<span class="logo-360">360</span>
+                </span>
+
+            </div>
+
+            <nav class="menu">
+
+                <a href="@Url.Action("Index", "Home")">
+                    🏠 Home
+                </a>
+
+                <a href="@Url.Action("Index", "Reclamos")">
+                    📋 Mis Reclamos
+                </a>
+
+                <a href="@Url.Action("Index", "Atencion")"
+                   class="active">
+                    🛠️ Atención de reclamos
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <form method="post"
+                      action="@Url.Action("Logout", "Account")">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit" class="logout">
+                        🚪 Cerrar sesión
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+        <!-- AREA PRINCIPAL -->
+
+        <div class="workspace">
+
+            <header class="topbar">
+
+                <strong>
+                    Centro de atención al cliente
+                </strong>
+
+                <div class="account">
+
+                    <span>👤</span>
+
+                    <div>
+                        <strong>@nombre</strong>
+                        <small>Operario</small>
+                    </div>
+
+                </div>
+
+            </header>
+
+            <main class="content">
+
+                <!-- CABECERA -->
+
+                <section class="hero">
+
+                    <h1>🛠️ Atención de reclamos</h1>
+
+                    <p>
+                        Registra los avances de tus reclamos
+                        y márcalos como resueltos cuando
+                        termines de atenderlos.
+                    </p>
+
+                </section>
+
+                <!-- MENSAJES -->
+                @if (TempData["Ok"] != null)
+                {
+                    <div class="alert alert-ok">
+                        ✅ @TempData["Ok"]
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-error">
+                        ⚠️ @TempData["Error"]
+                    </div>
+                }
+
+                <!-- ESTADISTICAS -->
+
+                <section class="stats">
+
+                    <div class="stat">
+                        <div class="stat-icon">📋</div>
+
+                        <div>
+                            <strong>@reclamos.Count</strong>
+                            <small>Mis asignaciones</small>
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-icon">🕒</div>
+
+                        <div>
+                            <strong>@enProceso</strong>
+                            <small>En proceso</small>
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-icon">✅</div>
+
+                        <div>
+                            <strong>@resueltos</strong>
+                            <small>Resueltos</small>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- RECLAMOS ASIGNADOS -->
+
+                <section class="panel">
+
+                    <h2>📁 Reclamos asignados</h2>
+
+                    <p class="panel-subtitle">
+                        Aquí puedes registrar observaciones
+                        y resolver los reclamos asignados a tu cuenta.
+                    </p>
+
+                    <div class="search-row">
+
+                        <input type="search"
+                               id="buscador"
+                               class="search"
+                               placeholder="🔍 Buscar reclamo..." />
+
+                        <select id="filtroEstado"
+                                class="filter">
+
+                            <option value="Todos">Todos los estados</option>
+                            <option value="3">En proceso</option>
+                            <option value="4">Resuelto</option>
+                            <option value="5">Cerrado</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="table-scroll">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Tipo</th>
+                                    <th>Solicitante</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var r in reclamos)
+                                {
+                                    string nombreEstado = r.IdEstado switch
+                                    {
+                                        1 => "Registrado",
+                                        2 => "En evaluación",
+                                        3 => "En proceso",
+                                        4 => "Resuelto",
+                                        5 => "Cerrado",
+                                        _ => "Desconocido"
+                                    };
+
+                                    string claseEstado = r.IdEstado switch
+                                    {
+                                        3 => "proceso",
+                                        4 => "resuelto",
+                                        _ => ""
+                                    };
+
+                                    string fecha =
+                                    r.Fecha?.ToString("dd/MM/yyyy")
+                                    ?? "Sin fecha";
+
+                                    <tr class="fila-reclamo"
+                                        data-estado="@r.IdEstado"
+                                        data-texto="@r.Codigo @r.Tipo @r.Solicitante @r.Descripcion">
+
+                                        <td class="codigo">
+                                            @r.Codigo
+                                        </td>
+
+                                        <td>@r.Tipo</td>
+
+                                        <td>@r.Solicitante</td>
+
+                                        <td class="descripcion">
+                                            @r.Descripcion
+                                        </td>
+
+                                        <td>@fecha</td>
+
+                                        <td>
+                                            <span class="estado @claseEstado">
+                                                @nombreEstado
+                                            </span>
+                                        </td>
+
+                                        <td>
+
+                                            @if (r.IdEstado == 3)
+                                            {
+                                                <form method="post"
+                                                      action="@Url.Action("GuardarAvance", "Atencion")"
+                                                      class="form-atencion">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="codigo"
+                                                           value="@r.Codigo" />
+
+                                                    <label>
+                                                        Observación
+                                                    </label>
+
+                                                    <textarea name="comentario"
+                                                      class="observacion"
+                                                      maxlength="220"
+                                                      placeholder="Describe el trabajo realizado o la solución..."></textarea>
+
+                                                    <span class="ayuda">
+                                                        Para guardar un avance
+                                                        escribe al menos 10 caracteres.
+                                                        Para resolver, la observación
+                                                        es opcional.
+                                                    </span>
+
+                                                    <div class="acciones">
+
+                                                        <!-- GUARDAR AVANCE -->
+
+                                                        <button type="submit"
+                                                                class="btn-avance"
+                                                                formaction="@Url.Action("GuardarAvance", "Atencion")">
+                                                            💾 Guardar avance
+                                                        </button>
+
+                                                        <!-- MARCAR RESUELTO -->
+
+                                                        <button type="submit"
+                                                                class="btn-resolver"
+                                                                formaction="@Url.Action("Resolver", "Atencion")"
+                                                                onclick="return confirm('¿El problema está solucionado y deseas marcar el reclamo como Resuelto?');">
+                                                            ✅ Marcar resuelto
+                                                        </button>
+
+                                                    </div>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="sin-acciones">
+                                                    Sin acciones pendientes
+                                                </span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (reclamos.Count == 0)
+                    {
+                        <div class="empty">
+                            📭 No tienes reclamos asignados.
+                        </div>
+                    }
+
+                    <div class="empty"
+                         id="sinResultados"
+                         style="display:none">
+                        No se encontraron reclamos.
+                    </div>
+
+                    <div class="footer">
+                        Mostrando
+                        <strong id="cantidadVisible">
+                            @reclamos.Count
+                        </strong>
+                        de @reclamos.Count asignaciones.
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <!-- BUSCADOR Y FILTROS -->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const buscador = document.getElementById("buscador");
+            const filtro = document.getElementById("filtroEstado");
+
+            const filas = Array.from(
+                document.querySelectorAll(".fila-reclamo")
+            );
+
+            const cantidad = document.getElementById("cantidadVisible");
+            const sinResultados = document.getElementById("sinResultados");
+
+            function normalizar(texto) {
+                return (texto || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
+            }
+
+            function filtrar() {
+
+                const texto = normalizar(buscador.value);
+                const estado = filtro.value;
+
+                let visibles = 0;
+
+                filas.forEach(function (fila) {
+
+                    const coincideTexto =
+                        normalizar(fila.dataset.texto)
+                            .includes(texto);
+
+                    const coincideEstado =
+                        estado === "Todos" ||
+                        fila.dataset.estado === estado;
+
+                    const mostrar =
+                        coincideTexto && coincideEstado;
+
+                    fila.style.display =
+                        mostrar ? "" : "none";
+
+                    if (mostrar) {
+                        visibles++;
+                    }
+                });
+
+                cantidad.textContent = visibles;
+
+                sinResultados.style.display =
+                    filas.length > 0 && visibles === 0
+                        ? "block" : "none";
+            }
+
+            buscador.addEventListener("input", filtrar);
+            filtro.addEventListener("change", filtrar);
+
+            filtrar();
+        });
+    </script>
+
+</body>
+</html>

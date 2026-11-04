@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Models;
 
 namespace PyFinal_1.Data
@@ -11,7 +12,7 @@ namespace PyFinal_1.Data
         {
         }
 
-        // Tablas de SQL Server
+        // TABLAS DE SQL SERVER
         public DbSet<ReclamoBD> Reclamos { get; set; }
         public DbSet<TipoReclamoBD> TiposReclamo { get; set; }
         public DbSet<OperarioBD> Operarios { get; set; }
@@ -23,10 +24,11 @@ namespace PyFinal_1.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Tabla Reclamos
+            // TABLA RECLAMOS
             modelBuilder.Entity<ReclamoBD>(entity =>
             {
                 entity.ToTable("Reclamos");
+
                 entity.HasKey(e => e.IdReclamo);
 
                 entity.Property(e => e.CodigoReclamo)
@@ -47,10 +49,11 @@ namespace PyFinal_1.Data
                     .HasColumnType("datetime");
             });
 
-            // Tabla TiposReclamo
+            // TABLA TIPOS RECLAMO
             modelBuilder.Entity<TipoReclamoBD>(entity =>
             {
                 entity.ToTable("TiposReclamo");
+
                 entity.HasKey(e => e.IdTipoReclamo);
 
                 entity.Property(e => e.NombreTipo)
@@ -63,24 +66,50 @@ namespace PyFinal_1.Data
                     .IsUnicode(false);
             });
 
-            // Tabla Operarios (especialidad de cada operario)
+            // TABLA OPERARIOS
             modelBuilder.Entity<OperarioBD>(entity =>
             {
                 entity.ToTable("Operarios");
+
                 entity.HasKey(e => e.IdUsuario);
             });
 
-            // Tabla Usuarios (lectura: nombre y rol)
+            // TABLA USUARIOS CON DNI
             modelBuilder.Entity<UsuarioBD>(entity =>
             {
                 entity.ToTable("Usuarios");
+
                 entity.HasKey(e => e.IdUsuario);
+
+                entity.Property(e => e.NombresApellidos)
+                    .HasMaxLength(100)
+                    .IsUnicode(false)
+                    .IsRequired();
+
+                entity.Property(e => e.Correo)
+                    .HasMaxLength(100)
+                    .IsUnicode(false)
+                    .IsRequired();
+
+                entity.Property(e => e.Contrasena)
+                    .HasMaxLength(100)
+                    .IsUnicode(false)
+                    .IsRequired();
+
+                entity.Property(e => e.DNI)
+                    .HasMaxLength(8)
+                    .IsUnicode(false)
+                    .IsRequired(false);
+
+                entity.Property(e => e.IdRol)
+                    .IsRequired();
             });
 
-            // Tabla HistorialReclamos (trazabilidad de cambios de estado)
+            // TABLA HISTORIAL RECLAMOS
             modelBuilder.Entity<HistorialReclamoBD>(entity =>
             {
                 entity.ToTable("HistorialReclamos");
+
                 entity.HasKey(e => e.IdHistorial);
 
                 entity.Property(e => e.Comentario)

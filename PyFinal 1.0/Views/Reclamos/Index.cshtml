@@ -1,58 +1,1092 @@
-﻿@model List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+﻿@model IEnumerable<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+@using PyFinal_1.Domain.Enums
+
 @{
-    ViewData["Title"] = "Mis reclamos";
+    Layout = null;
+    ViewData["Title"] = "Mis Reclamos";
+
+    var reclamos = Model?.ToList()
+        ?? new List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>();
+
+    int total = reclamos.Count;
+    int proceso = reclamos.Count(x => x.Estado == EstadoReclamo.EnProceso);
+    int registrados = reclamos.Count(x => x.Estado == EstadoReclamo.Registrado);
+    int evaluacion = reclamos.Count(x => x.Estado == EstadoReclamo.EnEvaluacion);
 }
 
-<div class="card-reclamo ancha">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Mis reclamos</h2>
-        <a asp-action="Create" class="btn btn-primary">+ Registrar nuevo reclamo</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mis Reclamos - Cliente360</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        /* ESTRUCTURA GENERAL */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* MENU LATERAL */
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: white;
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+            z-index: 2;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 22px;
+            font-weight: 800;
+            padding: 0 11px;
+            margin-bottom: 55px;
+            color: #0f1f4d;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+        }
+
+        .logo-360 {
+            color: #1e89ff;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                color: #263c64;
+                font-size: 16px;
+                padding: 17px 20px;
+                border-radius: 13px;
+                transition: all .3s ease;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient(120deg, #e8f2ff, #dff7ff);
+                    color: #0866f5;
+                    font-weight: 700;
+                    border-left: 4px solid #0866f5;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 14px;
+            color: #697b99;
+        }
+
+            .sidebar-bottom a {
+                text-decoration: none;
+                color: #0866f5;
+                font-weight: 600;
+            }
+
+        .btn-logout {
+            background: none;
+            border: 0;
+            padding: 0;
+            font: inherit;
+            color: #d94c60;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* CONTENIDO PRINCIPAL */
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient(110deg, #3288fb, #8fe4f4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 18px 35px;
+            color: white;
+        }
+
+            .topbar strong {
+                font-size: 18px;
+            }
+
+        .account {
+            background: #ffffffcc;
+            color: #183762;
+            border-radius: 30px;
+            padding: 11px 20px;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 35px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        /* CABECERA */
+
+        .hero {
+            padding: 15px 8px 28px;
+            animation: aparecer .7s ease both;
+        }
+
+            .hero h1 {
+                margin: 0;
+                font-size: 38px;
+                font-weight: 800;
+            }
+
+            .hero p {
+                color: #7184a4;
+                font-size: 17px;
+            }
+
+        /* TARJETAS ESTADISTICAS */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            background: white;
+            padding: 25px;
+            border-radius: 17px;
+            box-shadow: 0 5px 20px #dce6f54d;
+            transition: transform .3s, box-shadow .3s;
+            animation: aparecer .7s ease both;
+        }
+
+            .stat-card:nth-child(2) {
+                animation-delay: .1s;
+            }
+
+            .stat-card:nth-child(3) {
+                animation-delay: .2s;
+            }
+
+            .stat-card:nth-child(4) {
+                animation-delay: .3s;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-7px);
+                box-shadow: 0 12px 30px #bed4f580;
+            }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-size: 26px;
+            background: #e8f2ff;
+        }
+
+        .stat-card:nth-child(2) .stat-icon {
+            background: #fff3d7;
+        }
+
+        .stat-card:nth-child(3) .stat-icon {
+            background: #def8ef;
+        }
+
+        .stat-card:nth-child(4) .stat-icon {
+            background: #dff8fc;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: 28px;
+        }
+
+        .stat-card small {
+            color: #7184a4;
+            font-size: 14px;
+        }
+
+        /* PANEL RECLAMOS */
+
+        .panel {
+            background: white;
+            padding: 26px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 27px;
+        }
+
+            .panel-header h2 {
+                margin: 0 0 7px;
+                font-size: 24px;
+            }
+
+            .panel-header p {
+                color: #8190a8;
+                margin: 0;
+            }
+
+        /* BOTON NUEVO RECLAMO */
+
+        .btn-new {
+            background: linear-gradient(120deg, #2583fc, #0056f5);
+            color: white;
+            text-decoration: none;
+            padding: 15px 24px;
+            border-radius: 12px;
+            font-weight: 650;
+            box-shadow: 0 5px 15px #0866f53d;
+            transition: all .3s;
+        }
+
+            .btn-new:hover {
+                color: white;
+                transform: translateY(-3px);
+                box-shadow: 0 9px 25px #0866f57a;
+            }
+
+        /* BUSCADOR Y FILTROS */
+
+        .search-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 480px;
+            min-width: 220px;
+            background: #f5f9ff;
+            border: 1px solid #dce8f8;
+            border-radius: 12px;
+            padding: 0 16px;
+            transition: all .3s ease;
+        }
+
+            .search-box:focus-within {
+                background: white;
+                border-color: #2583fc;
+                box-shadow: 0 0 0 4px #2583fc1a;
+                transform: translateY(-2px);
+            }
+
+            .search-box input {
+                width: 100%;
+                padding: 15px 0;
+                border: none;
+                outline: none;
+                background: transparent;
+                font-size: 14px;
+                color: #101b3e;
+            }
+
+                .search-box input::placeholder {
+                    color: #93a3bc;
+                }
+
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f5f9ff;
+            padding: 0 15px;
+            border: 1px solid #dce8f8;
+            border-radius: 12px;
+            transition: all .3s;
+        }
+
+            .filter-box:focus-within {
+                border-color: #2583fc;
+                box-shadow: 0 0 0 4px #2583fc1a;
+            }
+
+            .filter-box select {
+                border: none;
+                outline: none;
+                background: transparent;
+                padding: 15px 5px;
+                color: #263c64;
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+        /* TABLA */
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 820px;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #edf4ff;
+        }
+
+        th {
+            padding: 17px;
+            text-align: left;
+            color: #263c64;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 17px;
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        tbody tr {
+            transition: background .25s;
+        }
+
+            tbody tr:hover {
+                background: #f0f7ff;
+            }
+
+        .codigo {
+            color: #ed1683;
+            font-weight: 700;
+        }
+
+        /* ESTADOS */
+
+        .estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+            .estado::before {
+                content: "";
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+        .registrado {
+            color: #4d5d78;
+            background: #e9edf4;
+        }
+
+        .proceso {
+            color: #0761df;
+            background: #e3efff;
+        }
+
+        .evaluacion {
+            color: #009dc1;
+            background: #d9f8fb;
+        }
+
+        .resuelto {
+            color: #11855e;
+            background: #dbf8ec;
+        }
+
+        .cerrado {
+            color: #6a627b;
+            background: #eeeafa;
+        }
+
+        /* BOTON DE DETALLES */
+
+        .btn-detalle {
+            border: 1px solid #e2e9f6;
+            background: #f7faff;
+            padding: 7px 12px;
+            border-radius: 9px;
+            cursor: pointer;
+            color: #47618c;
+            font-size: 18px;
+            transition: all .3s;
+        }
+
+            .btn-detalle:hover {
+                background: #e3efff;
+                color: #0866f5;
+                transform: scale(1.08);
+            }
+
+        /* MENSAJES Y PIE */
+
+        .footer {
+            padding-top: 22px;
+            font-size: 14px;
+            color: #8190a8;
+        }
+
+        .sin-resultados {
+            display: none;
+            text-align: center;
+            padding: 35px;
+            color: #8190a8;
+        }
+
+        /* VENTANA DE DETALLES */
+
+        .detalle-modal {
+            width: min(480px, 92vw);
+            border: none;
+            border-radius: 20px;
+            padding: 30px;
+            color: #101b3e;
+            box-shadow: 0 20px 60px #14294d50;
+        }
+
+            .detalle-modal::backdrop {
+                background: #101b3e80;
+                backdrop-filter: blur(5px);
+            }
+
+            .detalle-modal h2 {
+                margin-top: 0;
+                font-size: 25px;
+            }
+
+            .detalle-modal p {
+                color: #536987;
+                line-height: 1.6;
+                overflow-wrap: anywhere;
+            }
+
+        .modal-cerrar {
+            display: block;
+            margin-top: 24px;
+            margin-left: auto;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 23px;
+            background: #0866f5;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+            .modal-cerrar:hover {
+                background: #0051cf;
+            }
+
+        /* ANIMACIONES */
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* DISEÑO RESPONSIVO */
+
+        @@media (max-width: 1100px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .sidebar-bottom {
+                display: none;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .filter-box {
+                width: 100%;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- MENU LATERAL -->
+
+        <aside class="sidebar">
+            <div class="logo" aria-label="Cliente360">
+                <svg class="logo-icon" viewBox="0 0 48 48" role="img" aria-label="Logo Cliente360">
+                    <defs>
+                        <linearGradient id="c360-barras" x1="0" y1="1" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#11d0ed" />
+                            <stop offset="100%" stop-color="#1357f6" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M5 30 Q5 27 8 26 L13 25 Q16 24 16 28 L16 40 Q16 43 13 43 L8 43 Q5 43 5 40Z" fill="#19baf6" />
+                    <path d="M19 21 Q19 18 22 17 L27 16 Q30 15 30 19 L30 40 Q30 43 27 43 L22 43 Q19 43 19 40Z" fill="#2789fd" />
+                    <path d="M33 11 Q33 8 36 7 L41 5 Q44 4 44 8 L44 40 Q44 43 41 43 L36 43 Q33 43 33 40Z" fill="url(#c360-barras)" />
+                </svg>
+                <span class="logo-name">Cliente<span class="logo-360">360</span></span>
+            </div>
+
+            <nav class="menu">
+
+                <a href="@Url.Action("Index", "Reclamos")"
+                   class="active">
+                    📋 Mis Reclamos
+                </a>
+
+                @if (User.IsInRole("Solicitante"))
+                {
+                    <a href="@Url.Action("Create", "Reclamos")">
+                        ➕ Nuevo Reclamo
+                    </a>
+                }
+
+                <a href="@Url.Action("Index", "Home")">
+                    🏠 Home
+                </a>
+
+                <a href="@Url.Action("Index", "Seguimiento")">
+                    🔎 Seguimiento
+                </a>
+
+                @if (User.IsInRole("Supervisor"))
+                {
+                    <a href="@Url.Action("Index", "Derivaciones")">
+                        🔄 Derivación
+                    </a>
+                }
+
+            </nav>
+
+            <div class="sidebar-bottom">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form method="post" action="@Url.Action("Logout", "Account")">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-logout">🚪 Cerrar sesión</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="@Url.Action("Login", "Account")">🔐 Iniciar sesión</a>
+                }
+            </div>
+
+        </aside>
+
+        <!-- ZONA PRINCIPAL -->
+
+        <div class="workspace">
+
+            <header class="topbar">
+                <strong>Centro de atención al cliente</strong>
+
+                <div class="account">
+                    👤 @(User.Identity?.Name ?? "Panel de reclamos") · @(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Invitado")
+                </div>
+            </header>
+
+            <main class="content">
+
+                <!-- TITULO -->
+
+                <section class="hero">
+
+                    <h1>📁 Mis reclamos</h1>
+
+                    <p>
+                        Gestiona y haz seguimiento de tus reclamos registrados.
+                    </p>
+
+                </section>
+
+                <!-- ESTADISTICAS -->
+
+                <section class="stats">
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📄</div>
+
+                        <div>
+                            <strong>@total</strong>
+                            <small>Total de reclamos</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">🕒</div>
+
+                        <div>
+                            <strong>@proceso</strong>
+                            <small>En proceso</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+
+                        <div>
+                            <strong>@registrados</strong>
+                            <small>Registrados</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">🔎</div>
+
+                        <div>
+                            <strong>@evaluacion</strong>
+                            <small>En evaluación</small>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- PANEL DE RECLAMOS -->
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h2>📋 Listado de reclamos</h2>
+                            <p>Consulta los detalles y estados actuales.</p>
+                        </div>
+
+                        @if (User.IsInRole("Solicitante"))
+                        {
+                            <a href="@Url.Action("Create", "Reclamos")"
+                               class="btn-new">
+                                ＋ Registrar nuevo reclamo
+                            </a>
+                        }
+
+                    </div>
+
+                    <!-- BUSCADOR Y FILTROS -->
+
+                    <div class="search-row">
+
+                        <div class="search-box">
+                            <span>🔍</span>
+
+                            <input type="search"
+                                   id="buscadorReclamos"
+                                   placeholder="Buscar código, tipo o descripción..."
+                                   aria-label="Buscar reclamos" />
+                        </div>
+
+                        <div class="filter-box">
+                            <span>⚙️</span>
+
+                            <select id="filtroEstado"
+                                    aria-label="Filtrar por estado">
+
+                                <option value="Todos">
+                                    Todos los estados
+                                </option>
+
+                                <option value="Registrado">
+                                    Registrado
+                                </option>
+
+                                <option value="En proceso">
+                                    En proceso
+                                </option>
+
+                                <option value="En evaluación">
+                                    En evaluación
+                                </option>
+
+                                <option value="Resuelto">
+                                    Resuelto
+                                </option>
+
+                                <option value="Cerrado">
+                                    Cerrado
+                                </option>
+
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- TABLA -->
+
+                    <div class="table-scroll">
+
+                        <table id="tablaReclamos">
+
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var reclamo in reclamos)
+                                {
+                                    var estadoClase = reclamo.Estado switch
+                                    {
+                                        EstadoReclamo.Registrado => "registrado",
+                                        EstadoReclamo.EnProceso => "proceso",
+                                        EstadoReclamo.EnEvaluacion => "evaluacion",
+                                        EstadoReclamo.Resuelto => "resuelto",
+                                        EstadoReclamo.Cerrado => "cerrado",
+                                        _ => "registrado"
+                                    };
+
+                                    var estadoTexto = reclamo.Estado switch
+                                    {
+                                        EstadoReclamo.Registrado => "Registrado",
+                                        EstadoReclamo.EnProceso => "En proceso",
+                                        EstadoReclamo.EnEvaluacion => "En evaluación",
+                                        EstadoReclamo.Resuelto => "Resuelto",
+                                        EstadoReclamo.Cerrado => "Cerrado",
+                                        _ => "Desconocido"
+                                    };
+
+                                    var fechaTexto = reclamo.FechaRegistro == DateTime.MinValue
+                                    ? "Sin fecha"
+                                    : reclamo.FechaRegistro.ToString("dd/MM/yyyy");
+
+                                    <tr class="reclamo-row"
+                                        data-estado="@estadoTexto"
+                                        data-codigo="@reclamo.Codigo"
+                                        data-tipo="@reclamo.TipoReclamo"
+                                        data-descripcion="@reclamo.Descripcion"
+                                        data-fecha="@fechaTexto">
+
+                                        <td class="codigo">
+                                            @reclamo.Codigo
+                                        </td>
+
+                                        <td>
+                                            @reclamo.TipoReclamo
+                                        </td>
+
+                                        <td>
+                                            @reclamo.Descripcion
+                                        </td>
+
+                                        <td>
+                                            @fechaTexto
+                                        </td>
+
+                                        <td>
+                                            <span class="estado @estadoClase">
+                                                @estadoTexto
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <button type="button"
+                                                    class="btn-detalle"
+                                                    aria-label="Ver detalles del reclamo @reclamo.Codigo">
+                                                •••
+                                            </button>
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <!-- SIN RESULTADOS -->
+
+                    <div class="sin-resultados" id="sinResultados">
+                        🔍 No se encontraron reclamos.
+                    </div>
+
+                    <div class="footer">
+                        Mostrando
+                        <strong id="cantidadVisible">@total</strong>
+                        de @total reclamos
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+
     </div>
 
-    @if (TempData["Ok"] != null)
-    {
-        <div class="alert alert-success">@TempData["Ok"]</div>
-    }
+    <!-- VENTANA DE DETALLES -->
 
-    @if (!Model.Any())
-    {
-        <p class="text-muted">Aún no has registrado ningún reclamo.</p>
-    }
-    else
-    {
-        <table class="table align-middle" id="tablaReclamos">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Tipo</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var r in Model)
-                {
-                    <tr>
-                        <td><code>@r.Codigo</code></td>
-                        <td>@r.TipoReclamo</td>
-                        <td>@(r.Descripcion.Length > 40 ? r.Descripcion[..40] + "..." : r.Descripcion)</td>
-                        <td>@r.FechaRegistro.ToString("dd/MM/yyyy")</td>
-                        <td><partial name="_EstadoBadge" model="r.Estado" /></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-</div>
+    <dialog class="detalle-modal" id="detalleModal">
 
-@section Scripts {
+        <h2>📋 Detalle del reclamo</h2>
+
+        <p>
+            <strong>Código:</strong>
+            <span id="modalCodigo"></span>
+        </p>
+
+        <p>
+            <strong>Tipo:</strong>
+            <span id="modalTipo"></span>
+        </p>
+
+        <p>
+            <strong>Descripción:</strong>
+            <span id="modalDescripcion"></span>
+        </p>
+
+        <p>
+            <strong>Fecha:</strong>
+            <span id="modalFecha"></span>
+        </p>
+
+        <p>
+            <strong>Estado:</strong>
+            <span id="modalEstado"></span>
+        </p>
+
+        <button type="button"
+                class="modal-cerrar"
+                id="cerrarModal">
+            Cerrar
+        </button>
+
+    </dialog>
+
+    <!-- JAVASCRIPT -->
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const alerta = document.querySelector('.alert-success');
-            if (alerta) {
-                setTimeout(() => { alerta.style.transition = 'opacity .5s'; alerta.style.opacity = '0'; }, 4000);
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const buscador = document.getElementById("buscadorReclamos");
+            const filtroEstado = document.getElementById("filtroEstado");
+            const filas = document.querySelectorAll(".reclamo-row");
+            const cantidadVisible = document.getElementById("cantidadVisible");
+            const sinResultados = document.getElementById("sinResultados");
+
+            // Normalizar texto para buscar con o sin tildes
+
+            function normalizar(texto) {
+                return (texto || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
             }
+
+            // BUSCADOR Y FILTRO DE ESTADOS
+
+            function filtrarReclamos() {
+
+                const texto = normalizar(buscador.value);
+                const estadoSeleccionado = filtroEstado.value;
+
+                let visibles = 0;
+
+                filas.forEach(function (fila) {
+
+                    const contenido = normalizar(
+                        fila.dataset.codigo + " " +
+                        fila.dataset.tipo + " " +
+                        fila.dataset.descripcion
+                    );
+
+                    const estado = fila.dataset.estado;
+
+                    const coincideTexto = contenido.includes(texto);
+
+                    const coincideEstado =
+                        estadoSeleccionado === "Todos" ||
+                        normalizar(estado) === normalizar(estadoSeleccionado);
+
+                    if (coincideTexto && coincideEstado) {
+                        fila.style.display = "";
+                        visibles++;
+                    } else {
+                        fila.style.display = "none";
+                    }
+
+                });
+
+                cantidadVisible.textContent = visibles;
+
+                sinResultados.style.display =
+                    visibles === 0 ? "block" : "none";
+            }
+
+            buscador.addEventListener("input", filtrarReclamos);
+
+            filtroEstado.addEventListener("change", filtrarReclamos);
+
+            // DETALLES DEL RECLAMO
+
+            const modal = document.getElementById("detalleModal");
+
+            const botonesDetalle = document.querySelectorAll(".btn-detalle");
+
+            botonesDetalle.forEach(function (boton) {
+
+                boton.addEventListener("click", function () {
+
+                    const fila = boton.closest("tr");
+
+                    document.getElementById("modalCodigo").textContent =
+                        fila.dataset.codigo;
+
+                    document.getElementById("modalTipo").textContent =
+                        fila.dataset.tipo;
+
+                    document.getElementById("modalDescripcion").textContent =
+                        fila.dataset.descripcion;
+
+                    document.getElementById("modalFecha").textContent =
+                        fila.dataset.fecha;
+
+                    document.getElementById("modalEstado").textContent =
+                        fila.dataset.estado;
+
+                    modal.showModal();
+
+                });
+
+            });
+
+            // CERRAR DETALLES
+
+            document.getElementById("cerrarModal")
+                .addEventListener("click", function () {
+                    modal.close();
+                });
+
+            filtrarReclamos();
+
         });
     </script>
-}
+
+</body>
+</html>

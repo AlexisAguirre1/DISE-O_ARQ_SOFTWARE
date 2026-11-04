@@ -1,81 +1,98 @@
-    
+
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Agregar servicios MVC
+// SERVICIOS MVC
 builder.Services.AddControllersWithViews();
 
-// CONEXIÓN A SQL SERVER
+// CONEXION CON SQL SERVER
 builder.Services.AddDbContext<ReclamosDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("ConexionSQL")
     ));
 
+// SERVICIO DE DERIVACION
 builder.Services.AddScoped<PyFinal_1.Services.DerivacionService>();
+
+// AUTENTICACION
+builder.Services
+    .AddAuthentication(
+        CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+
+        options.AccessDeniedPath =
+            "/Account/AccesoDenegado";
+
+        options.Cookie.Name = "PyFinal_1.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
+
+// PERMISOS
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// VERIFICAR CONEXIÓN CON LA BASE DE DATOS
+// COMPROBAR SQL SERVER
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider
         .GetRequiredService<ReclamosDbContext>();
 
-    bool conectado = await db.Database.CanConnectAsync();
-
-    if (conectado)
+    try
     {
-        app.Logger.LogInformation(
-            "CONEXIÓN EXITOSA CON SQL SERVER"
-        );
-
-        // Consultar reclamos desde SQL Server
-        var reclamos = await db.Reclamos
-            .AsNoTracking()
-            .OrderBy(r => r.IdReclamo)
-            .ToListAsync();
-
-        // Mostrar cantidad de reclamos
-        app.Logger.LogInformation(
-            "TOTAL DE RECLAMOS: {Total}",
-            reclamos.Count
-        );
-
-        // Mostrar los reclamos registrados
-        foreach (var reclamo in reclamos)
+        if (await db.Database.CanConnectAsync())
         {
             app.Logger.LogInformation(
-                "RECLAMO REGISTRADO: {Codigo}",
-                reclamo.CodigoReclamo
-            );
+                "CONEXION EXITOSA CON SQL SERVER");
+
+            int total = await db.Reclamos.CountAsync();
+
+            app.Logger.LogInformation(
+                "TOTAL DE RECLAMOS: {Total}", total);
+        }
+        else
+        {
+            app.Logger.LogWarning(
+                "NO SE PUDO CONECTAR A SQL SERVER");
         }
     }
-    else
+    catch (Exception ex)
     {
-        app.Logger.LogWarning(
-            "ERROR: NO SE PUDO CONECTAR A SQL SERVER"
-        );
+        app.Logger.LogError(
+            ex, "ERROR DE CONEXION A LA BASE DE DATOS");
     }
 }
 
-// Configurar HTTP
+// ERRORES
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
+// CONFIGURACION WEB
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+// AUTENTICACION Y AUTORIZACION
+app.UseAuthentication();
 app.UseAuthorization();
 
+// PANTALLA INICIAL: LOGIN
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

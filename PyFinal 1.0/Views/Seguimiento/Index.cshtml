@@ -1,0 +1,791 @@
+﻿@model IEnumerable<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>
+@using PyFinal_1.Domain.Enums
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Seguimiento de Reclamos";
+
+    var reclamos = Model?.ToList()
+        ?? new List<PyFinal_1.ViewModels.Reclamos.ListaReclamoVM>();
+
+    string nombre = User.Identity?.Name ?? "Usuario";
+    bool solicitante = User.IsInRole("Solicitante");
+    bool supervisor = User.IsInRole("Supervisor");
+    string rol = supervisor ? "Supervisor" : solicitante ? "Solicitante" : "Usuario";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seguimiento de Reclamos - Cliente360</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: white;
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px #dae5f550;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 22px;
+            font-weight: 800;
+            padding: 0 11px;
+            margin-bottom: 55px;
+            color: #0f1f4d;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+        }
+
+        .logo-360 {
+            color: #1e89ff;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+            .menu a {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                padding: 17px 20px;
+                border-radius: 13px;
+                color: #263c64;
+                text-decoration: none;
+                font-size: 16px;
+                transition: all .3s;
+            }
+
+                .menu a:hover {
+                    background: #e9f3ff;
+                    color: #0866f5;
+                    transform: translateX(5px);
+                }
+
+                .menu a.active {
+                    background: linear-gradient(120deg, #e8f2ff, #dff7ff);
+                    color: #0866f5;
+                    font-weight: 700;
+                    border-left: 4px solid #0866f5;
+                }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .logout {
+            background: transparent;
+            border: 0;
+            padding: 0;
+            color: #d94c60;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .workspace {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient(110deg, #3288fb, #8fe4f4);
+            color: white;
+            padding: 18px 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+            .topbar > strong {
+                font-size: 18px;
+            }
+
+        .account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffffdd;
+            color: #183762;
+            padding: 9px 18px;
+            border-radius: 35px;
+        }
+
+        .account-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+            .account-info small {
+                color: #7184a4;
+            }
+
+        .content {
+            padding: 35px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        .hero {
+            margin-bottom: 28px;
+            animation: aparecer .7s ease both;
+        }
+
+            .hero h1 {
+                margin: 0 0 12px;
+                font-size: 38px;
+            }
+
+            .hero p {
+                margin: 0;
+                color: #7184a4;
+                font-size: 16px;
+                line-height: 1.6;
+            }
+
+        .tracking-layout {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .panel {
+            background: white;
+            padding: 26px;
+            border-radius: 20px;
+            box-shadow: 0 7px 25px #dce6f54d;
+            animation: aparecer .8s ease both;
+        }
+
+            .panel h2 {
+                margin-top: 0;
+                font-size: 22px;
+            }
+
+        .subtext {
+            color: #7184a4;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .search {
+            width: 100%;
+            margin: 18px 0;
+            padding: 14px;
+            border: 1px solid #dce8f8;
+            border-radius: 12px;
+            background: #f5f9ff;
+            outline: none;
+            font-size: 14px;
+            transition: .3s;
+        }
+
+            .search:focus {
+                background: white;
+                border-color: #2583fc;
+                box-shadow: 0 0 0 4px #2583fc1a;
+            }
+
+        .claim-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .claim-item {
+            width: 100%;
+            text-align: left;
+            padding: 18px;
+            border-radius: 14px;
+            background: #f8fbff;
+            border: 1px solid #e0eaf7;
+            cursor: pointer;
+            transition: all .3s;
+            font-family: inherit;
+            color: inherit;
+        }
+
+            .claim-item:hover {
+                background: #eef6ff;
+                transform: translateY(-2px);
+            }
+
+            .claim-item.active {
+                background: #e9f3ff;
+                border-color: #3189fa;
+                box-shadow: 0 0 0 3px #3189fa1b;
+            }
+
+        .claim-code {
+            display: block;
+            color: #e91b84;
+            font-size: 14px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .claim-type {
+            display: block;
+            margin: 8px 0;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .claim-date {
+            display: block;
+            color: #7184a4;
+            font-size: 13px;
+        }
+
+        .mini-state {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 7px 11px;
+            border-radius: 8px;
+            background: white;
+            color: #1769ef;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .detail-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .detail-code {
+            font-size: 19px;
+            color: #e91b84;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .current-state {
+            background: #e6f0ff;
+            color: #1769ef;
+            border-radius: 30px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 26px;
+        }
+
+        .detail-field {
+            padding: 18px;
+            background: #f7faff;
+            border-radius: 13px;
+        }
+
+            .detail-field small {
+                display: block;
+                color: #7184a4;
+                margin-bottom: 9px;
+            }
+
+            .detail-field strong {
+                font-size: 15px;
+                overflow-wrap: anywhere;
+            }
+
+        .description {
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e1ebf8;
+            border-radius: 14px;
+        }
+
+            .description strong {
+                display: block;
+                margin-bottom: 12px;
+            }
+
+            .description p {
+                margin: 0;
+                line-height: 1.7;
+                color: #536987;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+        .line-title {
+            margin: 32px 0 25px;
+            font-size: 22px;
+        }
+
+        .timeline {
+            padding-left: 8px;
+        }
+
+        .step {
+            position: relative;
+            display: flex;
+            gap: 18px;
+            padding-bottom: 32px;
+        }
+
+            .step:not(:last-child)::before {
+                content: "";
+                position: absolute;
+                left: 11px;
+                top: 25px;
+                bottom: 0;
+                width: 2px;
+                background: #dce6f5;
+            }
+
+        .step-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e6ebf3;
+            border: 4px solid #e6ebf3;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .step.done .step-dot {
+            background: #20b889;
+            border-color: #daf7ec;
+        }
+
+        .step.done:not(:last-child)::before {
+            background: #20b889;
+        }
+
+        .step.current .step-dot {
+            background: #1769ef;
+            border-color: #cde4ff;
+            box-shadow: 0 0 0 4px #e9f3ff;
+        }
+
+        .step-content strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #8190a8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .step.done .step-content strong {
+            color: #11855e;
+        }
+
+        .step.current .step-content strong {
+            color: #0866f5;
+        }
+
+        .note {
+            background: #f0f7ff;
+            color: #536d94;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .empty {
+            text-align: center;
+            color: #8190a8;
+            padding: 35px 10px;
+            line-height: 1.7;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 13px 20px;
+            background: linear-gradient(120deg, #2583fc, #0056f5);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            transition: .3s;
+        }
+
+            .btn-back:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 18px #0866f53b;
+            }
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@media (max-width: 1100px) {
+            .tracking-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 750px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .logo {
+                margin-bottom: 18px;
+            }
+
+            .menu {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+                .menu a {
+                    white-space: nowrap;
+                }
+
+            .content {
+                padding: 18px;
+            }
+
+            .topbar {
+                padding: 15px;
+                flex-wrap: wrap;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo" aria-label="Cliente360">
+                <svg class="logo-icon" viewBox="0 0 48 48" role="img" aria-label="Logo Cliente360">
+                    <defs>
+                        <linearGradient id="c360-barras" x1="0" y1="1" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#11d0ed" />
+                            <stop offset="100%" stop-color="#1357f6" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M5 30 Q5 27 8 26 L13 25 Q16 24 16 28 L16 40 Q16 43 13 43 L8 43 Q5 43 5 40Z" fill="#19baf6" />
+                    <path d="M19 21 Q19 18 22 17 L27 16 Q30 15 30 19 L30 40 Q30 43 27 43 L22 43 Q19 43 19 40Z" fill="#2789fd" />
+                    <path d="M33 11 Q33 8 36 7 L41 5 Q44 4 44 8 L44 40 Q44 43 41 43 L36 43 Q33 43 33 40Z" fill="url(#c360-barras)" />
+                </svg>
+                <span class="logo-name">Cliente<span class="logo-360">360</span></span>
+            </div>
+
+            <nav class="menu">
+                <a href="@Url.Action("Index", "Home")">🏠 Home</a>
+                <a href="@Url.Action("Index", "Reclamos")">📋 Mis Reclamos</a>
+                @if (solicitante)
+                {
+                    <a href="@Url.Action("Create", "Reclamos")">➕ Nuevo Reclamo</a>
+                }
+                <a href="@Url.Action("Index", "Seguimiento")" class="active">🔎 Seguimiento</a>
+                @if (supervisor)
+                {
+                    <a href="@Url.Action("Index", "Derivaciones")">🔄 Derivación</a>
+                }
+            </nav>
+
+            <div class="sidebar-bottom">
+                <form method="post" action="@Url.Action("Logout", "Account")">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="logout">🚪 Cerrar sesión</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="workspace">
+            <header class="topbar">
+                <strong>Centro de atención al cliente</strong>
+                <div class="account">
+                    <span>👤</span>
+                    <div class="account-info">
+                        <strong>@nombre</strong>
+                        <small>@rol</small>
+                    </div>
+                </div>
+            </header>
+
+            <main class="content">
+                <section class="hero">
+                    <h1>🔎 Seguimiento de reclamos</h1>
+                    <p>Consulta el estado actual de tus reclamos y las etapas del proceso de atención.</p>
+                </section>
+
+                <div class="tracking-layout">
+                    <section class="panel">
+                        <h2>📋 Tus reclamos</h2>
+                        <p class="subtext">Total de reclamos: <strong>@reclamos.Count</strong></p>
+                        <input type="search" id="buscador" class="search" placeholder="Buscar por código o tipo..." aria-label="Buscar reclamos" />
+                        <div class="claim-list" id="listaReclamos">
+                            @foreach (var reclamo in reclamos)
+                            {
+                                var estado = reclamo.Estado switch
+                                {
+                                    EstadoReclamo.Registrado => "Registrado",
+                                    EstadoReclamo.EnEvaluacion => "En evaluación",
+                                    EstadoReclamo.EnProceso => "En proceso",
+                                    EstadoReclamo.Resuelto => "Resuelto",
+                                    EstadoReclamo.Cerrado => "Cerrado",
+                                    _ => "Desconocido"
+                                };
+
+                                int paso = reclamo.Estado switch
+                                {
+                                    EstadoReclamo.Registrado => 1,
+                                    EstadoReclamo.EnEvaluacion => 2,
+                                    EstadoReclamo.EnProceso => 3,
+                                    EstadoReclamo.Resuelto => 4,
+                                    EstadoReclamo.Cerrado => 5,
+                                    _ => 0
+                                };
+
+                                string fecha = reclamo.FechaRegistro == DateTime.MinValue
+                                ? "Sin fecha"
+                                : reclamo.FechaRegistro.ToString("dd/MM/yyyy");
+
+                                <button type="button"
+                                        class="claim-item"
+                                        data-codigo="@reclamo.Codigo"
+                                        data-tipo="@reclamo.TipoReclamo"
+                                        data-descripcion="@reclamo.Descripcion"
+                                        data-fecha="@fecha"
+                                        data-estado="@estado"
+                                        data-paso="@paso">
+                                    <span class="claim-code">@reclamo.Codigo</span>
+                                    <span class="claim-type">@reclamo.TipoReclamo</span>
+                                    <span class="claim-date">📅 @fecha</span>
+                                    <span class="mini-state">@estado</span>
+                                </button>
+                            }
+                        </div>
+                        <div class="empty" id="sinCoincidencias" style="display:none;">No se encontraron reclamos.</div>
+                    </section>
+
+                    <section class="panel">
+                        @if (reclamos.Count > 0)
+                        {
+                            <div id="detalleContenido">
+                                <div class="detail-top">
+                                    <div>
+                                        <p class="subtext">Información del reclamo</p>
+                                        <div class="detail-code" id="detalleCodigo"></div>
+                                    </div>
+                                    <span class="current-state" id="detalleEstado"></span>
+                                </div>
+                                <div class="detail-grid">
+                                    <div class="detail-field">
+                                        <small>Tipo de reclamo</small>
+                                        <strong id="detalleTipo"></strong>
+                                    </div>
+                                    <div class="detail-field">
+                                        <small>Fecha de registro</small>
+                                        <strong id="detalleFecha"></strong>
+                                    </div>
+                                </div>
+                                <div class="description">
+                                    <strong>📝 Descripción del reclamo</strong>
+                                    <p id="detalleDescripcion"></p>
+                                </div>
+                                <h2 class="line-title">📍 Seguimiento del trámite</h2>
+                                <div class="timeline" id="timeline"></div>
+                                <div class="note">
+                                    ℹ️ El seguimiento muestra el estado actual guardado en SQL Server.
+                                    Las etapas representan el proceso general de atención; para conocer las fechas
+                                    de cada cambio será necesario integrar el historial.
+                                </div>
+                                <a href="@Url.Action("Index", "Reclamos")" class="btn-back">← Volver a Mis Reclamos</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty">
+                                <h2>📭 Sin reclamos registrados</h2>
+                                <p>Todavía no hay reclamos disponibles para realizar seguimiento.</p>
+                                @if (solicitante)
+                                {
+                                    <a href="@Url.Action("Create", "Reclamos")" class="btn-back">Registrar reclamo</a>
+                                }
+                            </div>
+                        }
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const reclamos = Array.from(document.querySelectorAll(".claim-item"));
+            const buscador = document.getElementById("buscador");
+            const sinCoincidencias = document.getElementById("sinCoincidencias");
+
+            const etapas = [
+                { titulo: "Registrado", descripcion: "El reclamo fue registrado en el sistema." },
+                { titulo: "En evaluación", descripcion: "El reclamo se encuentra en etapa de revisión." },
+                { titulo: "En proceso", descripcion: "El reclamo se encuentra en etapa de atención." },
+                { titulo: "Resuelto", descripcion: "El reclamo tiene estado de resuelto." },
+                { titulo: "Cerrado", descripcion: "El trámite tiene estado de cerrado." }
+            ];
+
+            function seleccionarReclamo(boton) {
+                reclamos.forEach(function (item) { item.classList.remove("active"); });
+                boton.classList.add("active");
+                const datos = boton.dataset;
+
+                document.getElementById("detalleCodigo").textContent = datos.codigo;
+                document.getElementById("detalleTipo").textContent = datos.tipo;
+                document.getElementById("detalleFecha").textContent = datos.fecha;
+                document.getElementById("detalleDescripcion").textContent = datos.descripcion;
+                document.getElementById("detalleEstado").textContent = datos.estado;
+
+                const timeline = document.getElementById("timeline");
+                timeline.replaceChildren();
+                const pasoActual = Number(datos.paso);
+
+                etapas.forEach(function (etapa, indice) {
+                    const numero = indice + 1;
+                    const paso = document.createElement("div");
+                    paso.className = "step";
+                    if (pasoActual > 0 && numero < pasoActual) {
+                        paso.classList.add("done");
+                    } else if (numero === pasoActual) {
+                        paso.classList.add("current");
+                    }
+                    const punto = document.createElement("div");
+                    punto.className = "step-dot";
+                    const contenido = document.createElement("div");
+                    contenido.className = "step-content";
+                    const titulo = document.createElement("strong");
+                    titulo.textContent = etapa.titulo;
+                    const descripcion = document.createElement("p");
+                    descripcion.textContent = etapa.descripcion;
+                    contenido.appendChild(titulo);
+                    contenido.appendChild(descripcion);
+                    paso.appendChild(punto);
+                    paso.appendChild(contenido);
+                    timeline.appendChild(paso);
+                });
+            }
+
+            reclamos.forEach(function (boton) {
+                boton.addEventListener("click", function () { seleccionarReclamo(boton); });
+            });
+
+            function normalizar(texto) {
+                return (texto || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
+            }
+
+            buscador.addEventListener("input", function () {
+                const texto = normalizar(buscador.value);
+                let encontrados = 0;
+                let primerVisible = null;
+
+                reclamos.forEach(function (boton) {
+                    const contenido = normalizar(boton.dataset.codigo + " " + boton.dataset.tipo);
+                    const mostrar = contenido.includes(texto);
+                    boton.style.display = mostrar ? "" : "none";
+                    if (mostrar) {
+                        encontrados++;
+                        if (primerVisible === null) primerVisible = boton;
+                    }
+                });
+
+                sinCoincidencias.style.display = encontrados === 0 ? "block" : "none";
+                const detalle = document.getElementById("detalleContenido");
+                if (detalle) {
+                    detalle.style.display = encontrados === 0 ? "none" : "";
+                    const seleccionado = document.querySelector(".claim-item.active");
+                    if (primerVisible && (!seleccionado || seleccionado.style.display === "none")) {
+                        seleccionarReclamo(primerVisible);
+                    }
+                }
+            });
+
+            if (reclamos.length > 0) seleccionarReclamo(reclamos[0]);
+        });
+    </script>
+</body>
+</html>

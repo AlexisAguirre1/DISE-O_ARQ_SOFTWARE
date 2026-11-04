@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>PyFinal_1._0</RootNamespace>
+    <UserSecretsId>6f76c83b-d768-4364-98d0-395c68f70f5e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

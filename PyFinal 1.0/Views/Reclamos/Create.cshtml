@@ -1011,26 +1011,13 @@
                                 </span>
 
                                 <!-- DNI -->
-                                div class="form-group">
-                                <label asp-for="Dni">
-                                    DNI del solicitante
-                                    <span class="required">*</span>
-                                </label>
-
-                                <input asp-for="Dni"
-                                       id="dni"
-                                       type="text"
-                                       class="form-control"
-                                       placeholder="Ingrese su DNI de 8 dígitos"
-                                       maxlength="8"
-                                       pattern="[0-9]{8}"
-                                       inputmode="numeric"
-                                       required />
-
-                                <span asp-validation-for="Dni"
-                                      class="text-danger"></span>
-                            </div>
-
+                             <span class="preview-label">
+                      DNI del solicitante
+                          </span>
+             <span class="preview-value"
+                 id="previewDni">
+                   Sin completar
+                      </span>
                             <!-- TIPO -->
 
                             <span class="preview-label">

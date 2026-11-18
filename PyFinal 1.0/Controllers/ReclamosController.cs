@@ -6,6 +6,7 @@ using PyFinal_1.Data;
 using PyFinal_1.Models;
 using PyFinal_1.ViewModels.Reclamos;
 using PyFinal_1.Domain.Enums;
+using PyFinal_1.Domain.Estados;
 using PyFinal_1._0.Domain;
 using System.Security.Claims;
 
@@ -28,7 +29,7 @@ namespace PyFinal_1.Controllers
             _logger = logger;
         }
 
-        // MOSTRAR RECLAMOS SEGUN ROL
+        // MOSTRAR RECLAMOS SEGUN EL ROL
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -93,7 +94,7 @@ namespace PyFinal_1.Controllers
             return View(reclamos);
         }
 
-        // FORMULARIO: SOLO SOLICITANTE
+        // FORMULARIO DE REGISTRO: SOLO SOLICITANTE
         [HttpGet]
         [Authorize(Roles = "Solicitante")]
         public IActionResult Create()
@@ -101,7 +102,7 @@ namespace PyFinal_1.Controllers
             return View(new CrearReclamoVM());
         }
 
-        // GUARDAR RECLAMO
+        // GUARDAR RECLAMO EN SQL SERVER
         [HttpPost]
         [Authorize(Roles = "Solicitante")]
         [ValidateAntiForgeryToken]
@@ -114,7 +115,7 @@ namespace PyFinal_1.Controllers
                 return Forbid();
             }
 
-            // VALIDAR TIPO
+            // VALIDAR TIPO DE RECLAMO
             if (string.IsNullOrWhiteSpace(vm.TipoReclamo) ||
                 !configuracion.EsTipoPermitido(vm.TipoReclamo))
             {
@@ -182,7 +183,7 @@ namespace PyFinal_1.Controllers
             if (usuario == null)
                 return Forbid();
 
-            // VALIDAR DATOS CONTRA LA CUENTA
+            // VALIDAR NOMBRE Y CORREO
             bool mismoNombre = string.Equals(
                 usuario.NombresApellidos.Trim(),
                 vm.NombreCompleto.Trim(),
@@ -202,6 +203,7 @@ namespace PyFinal_1.Controllers
                 return View(vm);
             }
 
+            // VALIDAR DNI DE LA CUENTA
             if (string.IsNullOrEmpty(usuario.DNI) ||
                 usuario.DNI != vm.Dni)
             {
@@ -212,7 +214,7 @@ namespace PyFinal_1.Controllers
                 return View(vm);
             }
 
-            // BUSCAR TIPO
+            // OBTENER TIPO DE RECLAMO
             var tipo = await _db.TiposReclamo
                 .AsNoTracking()
                 .FirstOrDefaultAsync(
@@ -227,7 +229,7 @@ namespace PyFinal_1.Controllers
                 return View(vm);
             }
 
-            // BUSCAR ESTADO REGISTRADO
+            // OBTENER ESTADO REGISTRADO
             int idEstado = await _db.Database.SqlQuery<int>(
                 $"""
                 SELECT [IdEstado] AS [Value]
@@ -260,7 +262,6 @@ namespace PyFinal_1.Controllers
                 FechaRegistro = DateTime.Now
             };
 
-            // GUARDAR EN SQL SERVER
             try
             {
                 _db.Reclamos.Add(nuevoReclamo);
@@ -282,6 +283,111 @@ namespace PyFinal_1.Controllers
 
                 return View(vm);
             }
+        }
+
+        // EVALUAR RECLAMO: SOLO SUPERVISOR
+        [HttpPost]
+        [Authorize(Roles = "Supervisor")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Evaluar(string codigo)
+        {
+            // IDENTIFICAR AL SUPERVISOR
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out int idSupervisor))
+            {
+                return Forbid();
+            }
+
+            bool esSupervisor = await _db.Usuarios
+                .AsNoTracking()
+                .AnyAsync(u =>
+                    u.IdUsuario == idSupervisor &&
+                    u.IdRol == 2);
+
+            if (!esSupervisor)
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(codigo))
+            {
+                TempData["Error"] =
+                    "El código del reclamo es inválido.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // BUSCAR RECLAMO EN SQL SERVER
+            var reclamo = await _db.Reclamos
+                .FirstOrDefaultAsync(
+                    r => r.CodigoReclamo == codigo);
+
+            if (reclamo == null)
+            {
+                TempData["Error"] =
+                    "El reclamo no existe.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // SOLO EVALUAR RECLAMOS REGISTRADOS
+            if (reclamo.IdEstado != 1 ||
+                reclamo.IdOperario != null)
+            {
+                TempData["Error"] =
+                    "Solo se pueden evaluar reclamos registrados.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // VALIDAR TRANSICION CON PATRON STATE
+            var contexto = new ReclamoContexto(
+                EstadoReclamo.Registrado);
+
+            var resultado = contexto.Evaluar();
+
+            if (!resultado.Exito ||
+                contexto.EstadoActual != EstadoReclamo.EnEvaluacion)
+            {
+                TempData["Error"] = resultado.Mensaje;
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // ACTUALIZAR RECLAMO
+            reclamo.IdEstado = 2;
+            reclamo.FechaActualizacion = DateTime.Now;
+
+            // GUARDAR HISTORIAL DE EVALUACION
+            _db.HistorialReclamos.Add(
+                new HistorialReclamoBD
+                {
+                    IdReclamo = reclamo.IdReclamo,
+                    IdEstadoAnterior = 1,
+                    IdEstadoNuevo = 2,
+                    IdUsuarioModificacion = idSupervisor,
+                    Comentario =
+                        "Reclamo evaluado por el supervisor.",
+                    FechaCambio = DateTime.Now
+                });
+
+            try
+            {
+                await _db.SaveChangesAsync();
+
+                TempData["Ok"] =
+                    "Reclamo evaluado correctamente. " +
+                    "Ahora puedes derivarlo a un operario.";
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(
+                    ex, "Error evaluando reclamo");
+
+                TempData["Error"] =
+                    "No se pudo guardar la evaluación.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

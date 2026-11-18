@@ -1,0 +1,666 @@
+@model PyFinal_1.ViewModels.Cuentas.RegistrarCuentaVM
+@{
+    Layout = null;
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crear cuenta - PyFinal_1</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f7ff;
+            color: #101b3e;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            min-height: 82px;
+            background: linear-gradient(110deg, #3288fb, #8fe4f4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 35px;
+            color: white;
+        }
+
+        .topbar-brand {
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: .2px;
+        }
+
+        .topbar-badge {
+            background: #ffffffcc;
+            color: #183762;
+            border-radius: 30px;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 35px;
+        }
+
+        .login-shell {
+            width: 100%;
+            max-width: 1320px;
+            min-height: 720px;
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px #c8d7ee70;
+            display: grid;
+            grid-template-columns: 1.1fr .95fr;
+            animation: aparecer .7s ease both;
+        }
+
+        .left-panel {
+            background: linear-gradient(145deg, #e6f1ff, #d7f6ff);
+            padding: 60px 48px;
+            position: relative;
+        }
+
+            .left-panel::after {
+                content: "";
+                position: absolute;
+                right: -80px;
+                top: 80px;
+                width: 220px;
+                height: 220px;
+                background: #ffffff55;
+                border-radius: 50%;
+                filter: blur(2px);
+            }
+
+        .brand-mini {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffffa8;
+            color: #1b3d69;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-weight: 700;
+            margin-bottom: 34px;
+        }
+
+        .left-panel h1 {
+            margin: 0 0 16px;
+            font-size: 52px;
+            line-height: 1.1;
+            font-weight: 800;
+            color: #0f2551;
+        }
+
+        .left-panel .intro {
+            margin: 0 0 38px;
+            color: #5c7394;
+            font-size: 19px;
+            line-height: 1.7;
+            max-width: 560px;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: white;
+            display: grid;
+            place-items: center;
+            font-size: 26px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 18px #bfd6f34a;
+        }
+
+        .feature strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 6px;
+            color: #132d5d;
+        }
+
+        .feature p {
+            margin: 0;
+            color: #62799a;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .support-box {
+            margin-top: auto;
+            text-align: center;
+            padding-top: 15px;
+        }
+
+        .support-emoji {
+            font-size: 88px;
+            animation: flotar 4s ease-in-out infinite;
+        }
+
+        .support-text {
+            margin-top: 10px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1769ef;
+        }
+
+        .right-panel {
+            background: #fbfdff;
+            padding: 50px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 460px;
+            background: white;
+            border-radius: 24px;
+            padding: 40px 34px;
+            box-shadow: 0 8px 28px #d7e3f45c;
+            animation: aparecer .9s ease both;
+        }
+
+            .login-card h2 {
+                margin: 0;
+                text-align: center;
+                font-size: 40px;
+                color: #0f2551;
+                font-weight: 800;
+            }
+
+            .login-card .desc {
+                margin: 12px 0 30px;
+                text-align: center;
+                color: #7085a4;
+                font-size: 16px;
+                line-height: 1.6;
+            }
+
+        .alert-error {
+            background: #fff1f3;
+            color: #b02e47;
+            border: 1px solid #ffd0d8;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 9px;
+                font-size: 14px;
+                font-weight: 700;
+                color: #233a63;
+            }
+
+        .form-control {
+            width: 100%;
+            border: 1px solid #d8e4f5;
+            background: #f7fbff;
+            border-radius: 14px;
+            padding: 15px 16px;
+            font-size: 15px;
+            outline: none;
+            color: #122b58;
+            transition: all .28s ease;
+        }
+
+            .form-control:focus {
+                border-color: #2a82fb;
+                background: white;
+                box-shadow: 0 0 0 4px #2a82fb1a;
+                transform: translateY(-1px);
+            }
+
+            .form-control::placeholder {
+                color: #93a4bd;
+            }
+
+        .password-box {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+        }
+
+            .password-box .form-control {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+                border-right: none;
+            }
+
+        .toggle-password {
+            min-width: 58px;
+            border: 1px solid #d8e4f5;
+            border-left: none;
+            background: #f7fbff;
+            border-top-right-radius: 14px;
+            border-bottom-right-radius: 14px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all .28s ease;
+        }
+
+            .toggle-password:hover {
+                background: #eef5ff;
+            }
+
+        .options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 14px 0 22px;
+            flex-wrap: wrap;
+        }
+
+        .check-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: #415b81;
+            font-size: 14px;
+        }
+
+            .check-wrap input {
+                width: 17px;
+                height: 17px;
+                accent-color: #1769ef;
+            }
+
+        .btn-login {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 15px 20px;
+            background: linear-gradient(120deg, #2b7cf7, #0058f4);
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px #1d67ea33;
+            transition: all .3s ease;
+        }
+
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 25px #1d67ea4a;
+            }
+
+        .divider {
+            margin: 26px 0 20px;
+            border: none;
+            border-top: 1px solid #e7eef8;
+        }
+
+        .bottom-text {
+            text-align: center;
+            color: #6e84a2;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+            .bottom-text span {
+                color: #1769ef;
+                font-weight: 700;
+            }
+
+        .quick-links {
+            margin-top: 22px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+            .quick-links a {
+                text-decoration: none;
+                color: #2b5d9a;
+                background: #edf5ff;
+                border: 1px solid #dae7f8;
+                padding: 10px 14px;
+                border-radius: 12px;
+                font-size: 14px;
+                transition: .25s ease;
+            }
+
+                .quick-links a:hover {
+                    background: #e2efff;
+                    transform: translateY(-1px);
+                }
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@keyframes flotar {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @@media (max-width: 1100px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel {
+                padding: 42px 30px;
+            }
+
+            .right-panel {
+                padding: 25px;
+            }
+
+            .left-panel h1 {
+                font-size: 42px;
+            }
+        }
+
+        @@media (max-width: 700px) {
+            .topbar {
+                padding: 16px 18px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .topbar-brand {
+                font-size: 22px;
+            }
+
+            .main {
+                padding: 18px;
+            }
+
+            .left-panel,
+            .right-panel {
+                padding: 25px 18px;
+            }
+
+            .login-card {
+                padding: 28px 20px;
+            }
+
+                .login-card h2 {
+                    font-size: 30px;
+                }
+
+            .left-panel h1 {
+                font-size: 33px;
+            }
+
+            .support-emoji {
+                font-size: 70px;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    
+        /* ---- Registro de cuenta ---- */
+        .field-error {
+            display: block;
+            color: #b91c1c;
+            font-size: .8rem;
+            margin-top: 4px;
+        }
+
+        .field-hint {
+            display: block;
+            color: #64748b;
+            font-size: .78rem;
+            margin-top: 4px;
+        }
+
+        .link-strong {
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .link-strong:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="topbar-brand">🔷 PyFinal_1</div>
+            <div class="topbar-badge">📝 Registro de cuenta</div>
+        </header>
+
+        <main class="main">
+            <div class="login-shell">
+
+                <section class="left-panel">
+                    <div class="brand-mini">📋 Sistema de Reclamos</div>
+
+                    <h1>Crea tu cuenta</h1>
+
+                    <p class="intro">
+                        Regístrate con tus datos personales para presentar
+                        reclamos y darles seguimiento desde un solo lugar.
+                    </p>
+
+                    <div class="feature-list">
+                        <div class="feature">
+                            <div class="feature-icon">🪪</div>
+                            <div>
+                                <strong>Tu identidad, una sola vez</strong>
+                                <p>
+                                    Tu DNI queda asociado a tu cuenta, así no
+                                    tendrás que ingresarlo en cada reclamo.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">🔎</div>
+                            <div>
+                                <strong>Haz seguimiento</strong>
+                                <p>
+                                    Consulta el estado de tus reclamos y revisa
+                                    su progreso en cualquier momento.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">🛡️</div>
+                            <div>
+                                <strong>Información protegida</strong>
+                                <p>
+                                    Tu contraseña se guarda cifrada y solo tú
+                                    puedes ver tus reclamos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="support-box">
+                        <div class="support-emoji">👩‍💻</div>
+                        <div class="support-text">Centro de atención al cliente</div>
+                    </div>
+                </section>
+
+                <section class="right-panel">
+                    <div class="login-card">
+                        <h2>Crear cuenta</h2>
+
+                        <p class="desc">
+                            Completa tus datos para registrarte como solicitante.
+                        </p>
+
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert-error">
+                                @ViewBag.Error
+                            </div>
+                        }
+
+                        <form asp-controller="Account" asp-action="Register" method="post">
+
+                            <div class="form-group">
+                                <label asp-for="NombresApellidos">Nombres y apellidos</label>
+                                <input asp-for="NombresApellidos"
+                                       class="form-control"
+                                       placeholder="Ej. María Torres López"
+                                       autocomplete="name"
+                                       maxlength="100"
+                                       required />
+                                <span asp-validation-for="NombresApellidos" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Correo">Correo electrónico</label>
+                                <input asp-for="Correo"
+                                       type="email"
+                                       class="form-control"
+                                       placeholder="ejemplo@correo.com"
+                                       autocomplete="email"
+                                       maxlength="100"
+                                       required />
+                                <span asp-validation-for="Correo" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="DNI">DNI</label>
+                                <input asp-for="DNI"
+                                       class="form-control"
+                                       placeholder="8 dígitos"
+                                       inputmode="numeric"
+                                       maxlength="8"
+                                       pattern="[0-9]{8}"
+                                       title="El DNI debe tener 8 dígitos numéricos"
+                                       required />
+                                <span asp-validation-for="DNI" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Contrasena">Contraseña</label>
+                                <div class="password-box">
+                                    <input asp-for="Contrasena"
+                                           type="password"
+                                           class="form-control"
+                                           placeholder="Mínimo 8 caracteres"
+                                           autocomplete="new-password"
+                                           maxlength="64"
+                                           required />
+                                    <button type="button"
+                                            class="toggle-password"
+                                            onclick="mostrarPassword('Contrasena')">
+                                        👁
+                                    </button>
+                                </div>
+                                <span class="field-hint">Mínimo 8 caracteres, con letras y números.</span>
+                                <span asp-validation-for="Contrasena" class="field-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="ConfirmarContrasena">Confirmar contraseña</label>
+                                <div class="password-box">
+                                    <input asp-for="ConfirmarContrasena"
+                                           type="password"
+                                           class="form-control"
+                                           placeholder="Repite tu contraseña"
+                                           autocomplete="new-password"
+                                           maxlength="64"
+                                           required />
+                                    <button type="button"
+                                            class="toggle-password"
+                                            onclick="mostrarPassword('ConfirmarContrasena')">
+                                        👁
+                                    </button>
+                                </div>
+                                <span asp-validation-for="ConfirmarContrasena" class="field-error"></span>
+                            </div>
+
+                            <button type="submit" class="btn-login">
+                                Crear cuenta →
+                            </button>
+
+                            <hr class="divider" />
+
+                            <p class="bottom-text">
+                                ¿Ya tienes cuenta?
+                                <a class="link-strong" href="@Url.Action("Login", "Account")">Inicia sesión</a>
+                            </p>
+                        </form>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function mostrarPassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === "password" ? "text" : "password";
+        }
+
+        // El DNI solo admite dígitos (máximo 8)
+        document.getElementById("DNI").addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "").slice(0, 8);
+        });
+    </script>
+</body>
+</html>

@@ -700,10 +700,27 @@
                                         </td>
 
                                         <td>
-                                            <a class="btn-derivar"
-                                               href="@Url.Action("Derivar", "Derivaciones", new { codigo = item.Codigo })">
-                                                Derivar →
-                                            </a>
+                                            @if (item.IdEstado == 1)
+                                            {
+                                                <form method="post"
+                                                      action="@Url.Action("Evaluar", "Derivaciones")"
+                                                      style="margin:0">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="codigo" value="@item.Codigo" />
+                                                    <button type="submit"
+                                                            class="btn-derivar"
+                                                            style="border:none;cursor:pointer;font:inherit">
+                                                        Evaluar →
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn-derivar"
+                                                   href="@Url.Action("Derivar", "Derivaciones", new { codigo = item.Codigo })">
+                                                    Derivar →
+                                                </a>
+                                            }
                                         </td>
 
                                     </tr>

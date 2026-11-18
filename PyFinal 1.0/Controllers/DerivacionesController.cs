@@ -1,9 +1,9 @@
-﻿
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
 using PyFinal_1.Services;
+using System.Security.Claims;
 
 namespace PyFinal_1.Controllers
 {
@@ -13,6 +13,7 @@ namespace PyFinal_1.Controllers
         private readonly ReclamosDbContext _db;
         private readonly DerivacionService _servicio;
 
+        private const int Registrado = 1;
         private const int EnEvaluacion = 2;
         private const int EnProceso = 3;
 
@@ -24,7 +25,13 @@ namespace PyFinal_1.Controllers
             _servicio = servicio;
         }
 
-        // RECLAMOS LISTOS PARA DERIVAR
+        // Id del supervisor que tiene la sesión iniciada
+        private bool ObtenerIdSupervisor(out int idSupervisor)
+            => int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out idSupervisor);
+
+        // RECLAMOS PENDIENTES: REGISTRADOS (por evaluar) Y EN EVALUACION (por derivar)
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -34,7 +41,7 @@ namespace PyFinal_1.Controllers
                     on r.IdTipoReclamo equals t.IdTipoReclamo
                 join u in _db.Usuarios.AsNoTracking()
                     on r.IdUsuario equals u.IdUsuario
-                where r.IdEstado == EnEvaluacion
+                where (r.IdEstado == Registrado || r.IdEstado == EnEvaluacion)
                       && r.IdOperario == null
                 orderby r.FechaRegistro descending
                 select new DerivacionPendienteVista
@@ -49,6 +56,30 @@ namespace PyFinal_1.Controllers
             ).ToListAsync();
 
             return View(pendientes);
+        }
+
+        // PASA UN RECLAMO DE "REGISTRADO" A "EN EVALUACION"
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Evaluar(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo) ||
+                !ObtenerIdSupervisor(out int idSupervisor))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var (exito, mensaje) =
+                await _servicio.EvaluarAsync(codigo, idSupervisor);
+
+            if (!exito)
+            {
+                TempData["Error"] = mensaje;
+                return RedirectToAction(nameof(Index));
+            }
+
+            // El supervisor continúa directo con la derivación
+            return RedirectToAction(nameof(Derivar), new { codigo });
         }
 
         // FORMULARIO DE ASIGNACION
@@ -124,6 +155,9 @@ namespace PyFinal_1.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (!ObtenerIdSupervisor(out int idSupervisor))
+                return Forbid();
+
             var reclamo = await _db.Reclamos
                 .AsNoTracking()
                 .FirstOrDefaultAsync(
@@ -176,7 +210,7 @@ namespace PyFinal_1.Controllers
             // UTILIZAR EL SERVICIO EXISTENTE
             var (exito, mensaje) =
                 await _servicio.DerivarAsync(
-                    codigo, operarioId);
+                    codigo, operarioId, idSupervisor);
 
             if (exito)
             {

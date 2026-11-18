@@ -96,8 +96,59 @@ public class DerivacionService
         };
     }
 
+    // Pasa un reclamo de "Registrado" a "En evaluación"
+    public async Task<(bool Exito, string Mensaje)> EvaluarAsync(string codigo, int idSupervisor)
+    {
+        var reclamo = await _db.Reclamos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.CodigoReclamo == codigo);
+
+        if (reclamo == null)
+            return (false, "El reclamo no existe.");
+
+        // Patrón State: el estado actual decide si se puede evaluar
+        var contexto = new ReclamoContexto(MapearEstado(reclamo.IdEstado));
+        var resultado = contexto.Evaluar();
+
+        if (!resultado.Exito)
+            return (false, resultado.Mensaje);
+
+        int estadoAnterior = reclamo.IdEstado;
+        int estadoNuevo = MapearIdEstado(resultado.NuevoEstado!.Value);
+        DateTime ahora = DateTime.Now;
+
+        await using var transaccion = await _db.Database.BeginTransactionAsync();
+
+        // Solo actualiza si nadie más lo cambió mientras tanto
+        int actualizados = await _db.Reclamos
+            .Where(r => r.IdReclamo == reclamo.IdReclamo
+                        && r.IdEstado == estadoAnterior)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.IdEstado, estadoNuevo)
+                .SetProperty(r => r.FechaActualizacion, (DateTime?)ahora));
+
+        if (actualizados != 1)
+            return (false, "El reclamo cambió mientras lo evaluabas. Actualiza la lista.");
+
+        _db.HistorialReclamos.Add(new HistorialReclamoBD
+        {
+            IdReclamo = reclamo.IdReclamo,
+            IdEstadoAnterior = estadoAnterior,
+            IdEstadoNuevo = estadoNuevo,
+            IdUsuarioModificacion = idSupervisor,
+            Comentario = "Reclamo tomado para evaluación",
+            FechaCambio = ahora
+        });
+
+        await _db.SaveChangesAsync();
+        await transaccion.CommitAsync();
+
+        return (true, $"Reclamo {codigo} en evaluación.");
+    }
+
     // Guarda la derivación: actualiza el reclamo y escribe el historial
-    public async Task<(bool Exito, string Mensaje)> DerivarAsync(string codigo, int operarioId)
+    public async Task<(bool Exito, string Mensaje)> DerivarAsync(
+        string codigo, int operarioId, int idSupervisor)
     {
         var reclamo = await _db.Reclamos
             .FirstOrDefaultAsync(r => r.CodigoReclamo == codigo);
@@ -130,15 +181,6 @@ public class DerivacionService
         if (!resultado.Exito)
             return (false, resultado.Mensaje);
 
-        // Mientras no exista el login, se registra al primer supervisor de la base
-        var supervisor = await _db.Usuarios
-            .Where(u => u.IdRol == IdRolSupervisor)
-            .OrderBy(u => u.IdUsuario)
-            .FirstOrDefaultAsync();
-
-        if (supervisor == null)
-            return (false, "No hay un supervisor registrado en la base de datos.");
-
         int estadoAnterior = reclamo.IdEstado;
         int estadoNuevo = MapearIdEstado(resultado.NuevoEstado!.Value);
 
@@ -151,7 +193,7 @@ public class DerivacionService
             IdReclamo = reclamo.IdReclamo,
             IdEstadoAnterior = estadoAnterior,
             IdEstadoNuevo = estadoNuevo,
-            IdUsuarioModificacion = supervisor.IdUsuario,
+            IdUsuarioModificacion = idSupervisor,
             Comentario = $"Derivado a {operario.NombresApellidos}",
             FechaCambio = DateTime.Now
         });

@@ -10,6 +10,7 @@ using PyFinal_1.Models;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using PyFinal_1.ViewModels.Cuentas;
 
 namespace PyFinal_1.Controllers
 {
@@ -211,6 +212,85 @@ namespace PyFinal_1.Controllers
             catch (FormatException)
             {
                 return false;
+            }
+        }
+        // MOSTRAR REGISTRO DE CUENTA
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Reclamos");
+
+            return View(new RegistrarCuentaVM());
+        }
+
+        // CREAR CUENTA (el registro público siempre crea un Solicitante)
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegistrarCuentaVM vm)
+        {
+            vm.NombresApellidos = (vm.NombresApellidos ?? "").Trim();
+            vm.Correo = (vm.Correo ?? "").Trim();
+            vm.DNI = (vm.DNI ?? "").Trim();
+
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            try
+            {
+                // Correo y DNI no pueden repetirse
+                if (await _db.Usuarios.AnyAsync(u => u.Correo == vm.Correo))
+                    ModelState.AddModelError(nameof(vm.Correo),
+                        "Este correo ya está registrado.");
+
+                if (await _db.Usuarios.AnyAsync(u => u.DNI == vm.DNI))
+                    ModelState.AddModelError(nameof(vm.DNI),
+                        "Este DNI ya está registrado.");
+
+                if (!ModelState.IsValid)
+                    return View(vm);
+
+                // El rol lo decide el sistema, nunca el formulario
+                string nombreRol = "Solicitante";
+
+                int idRol = await _db.Database.SqlQuery<int>(
+                    $"SELECT [IdRol] AS [Value] FROM [dbo].[Roles] WHERE [NombreRol] = {nombreRol}")
+                    .FirstOrDefaultAsync();
+
+                if (idRol == 0)
+                {
+                    ViewBag.Error =
+                        "No se pudo crear la cuenta: falta configurar los roles del sistema.";
+                    return View(vm);
+                }
+
+                var usuario = new UsuarioBD
+                {
+                    NombresApellidos = vm.NombresApellidos,
+                    Correo = vm.Correo,
+                    DNI = vm.DNI,
+                    IdRol = idRol
+                };
+
+                // La contraseña se guarda cifrada, igual que en el login
+                usuario.Contrasena = _hasher.HashPassword(usuario, vm.Contrasena);
+
+                _db.Usuarios.Add(usuario);
+                await _db.SaveChangesAsync();
+
+                TempData["Ok"] =
+                    "Cuenta creada correctamente. Ya puedes iniciar sesión.";
+
+                return RedirectToAction(nameof(Login));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear la cuenta.");
+                ViewBag.Error =
+                    "No se pudo crear la cuenta. Inténtalo nuevamente.";
+                return View(vm);
             }
         }
 

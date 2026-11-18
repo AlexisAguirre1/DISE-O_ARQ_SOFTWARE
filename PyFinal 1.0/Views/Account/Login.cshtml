@@ -533,6 +533,13 @@
                                 @ViewBag.Error
                             </div>
                         }
+                        @if (TempData["Ok"] != null)
+                        {
+                            <div class="alert-error"
+                                 style="background:#ecfdf5;border-color:#a7f3d0;color:#047857">
+                                @TempData["Ok"]
+                            </div>
+                        }
 
                         <form action="/Account/Login" method="post">
                             @Html.AntiForgeryToken()
@@ -586,7 +593,8 @@
 
                             <p class="bottom-text">
                                 ¿No tienes cuenta?
-                                <span>Registro próximamente</span>
+                                <a href="@Url.Action("Register", "Account")"
+                                   style="font-weight:700;color:#2563eb;text-decoration:none">Crear cuenta</a>
                             </p>
 
                             <div class="quick-links">

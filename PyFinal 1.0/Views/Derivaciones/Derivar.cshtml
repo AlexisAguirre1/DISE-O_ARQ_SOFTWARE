@@ -462,26 +462,7 @@
                 </span>
             </div>
 
-            <nav class="menu">
-
-                <a href="@Url.Action("Index", "Home")">
-                    🏠 Home
-                </a>
-
-                <a href="@Url.Action("Index", "Reclamos")">
-                    📋 Reclamos
-                </a>
-
-                <a href="@Url.Action("Index", "Seguimiento")">
-                    🔎 Seguimiento
-                </a>
-
-                <a href="@Url.Action("Index", "Derivaciones")"
-                   class="active">
-                    🔄 Derivación
-                </a>
-
-            </nav>
+            <partial name="_MenuLateral" />
 
             <div class="sidebar-bottom">
                 <form method="post"

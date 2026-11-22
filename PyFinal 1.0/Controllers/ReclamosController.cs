@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
@@ -94,12 +93,45 @@ namespace PyFinal_1.Controllers
             return View(reclamos);
         }
 
+        // CARGA NOMBRE, CORREO Y DNI DESDE LA CUENTA
+        // (en el formulario se muestran solo de lectura)
+        private async Task<bool> CargarDatosCuentaAsync(
+            CrearReclamoVM vm,
+            int idUsuario)
+        {
+            var usuario = await _db.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    u => u.IdUsuario == idUsuario);
+
+            if (usuario == null)
+                return false;
+
+            vm.NombreCompleto = usuario.NombresApellidos;
+            vm.Correo = usuario.Correo;
+            vm.Dni = usuario.DNI ?? string.Empty;
+
+            return true;
+        }
+
         // FORMULARIO DE REGISTRO: SOLO SOLICITANTE
         [HttpGet]
         [Authorize(Roles = "Solicitante")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new CrearReclamoVM());
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out int idUsuario))
+            {
+                return Forbid();
+            }
+
+            var vm = new CrearReclamoVM();
+
+            if (!await CargarDatosCuentaAsync(vm, idUsuario))
+                return Forbid();
+
+            return View(vm);
         }
 
         // GUARDAR RECLAMO EN SQL SERVER
@@ -115,6 +147,21 @@ namespace PyFinal_1.Controllers
                 return Forbid();
             }
 
+            // NOMBRE, CORREO Y DNI SALEN DE LA CUENTA,
+            // NUNCA DEL FORMULARIO
+            if (!await CargarDatosCuentaAsync(vm, idUsuario))
+                return Forbid();
+
+            if (string.IsNullOrEmpty(vm.Dni))
+            {
+                ModelState.AddModelError(
+                    "",
+                    "Tu cuenta no tiene un DNI registrado. " +
+                    "No puedes registrar reclamos.");
+
+                return View(vm);
+            }
+
             // VALIDAR TIPO DE RECLAMO
             if (string.IsNullOrWhiteSpace(vm.TipoReclamo) ||
                 !configuracion.EsTipoPermitido(vm.TipoReclamo))
@@ -122,16 +169,6 @@ namespace PyFinal_1.Controllers
                 ModelState.AddModelError(
                     nameof(vm.TipoReclamo),
                     "Tipo de reclamo no válido.");
-            }
-
-            // VALIDAR DNI
-            if (string.IsNullOrWhiteSpace(vm.Dni) ||
-                vm.Dni.Length != 8 ||
-                !vm.Dni.All(char.IsAsciiDigit))
-            {
-                ModelState.AddModelError(
-                    nameof(vm.Dni),
-                    "El DNI debe tener 8 números.");
             }
 
             // VALIDAR DESCRIPCION
@@ -173,46 +210,6 @@ namespace PyFinal_1.Controllers
 
             if (!ModelState.IsValid)
                 return View(vm);
-
-            // OBTENER USUARIO AUTENTICADO
-            var usuario = await _db.Usuarios
-                .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    u => u.IdUsuario == idUsuario);
-
-            if (usuario == null)
-                return Forbid();
-
-            // VALIDAR NOMBRE Y CORREO
-            bool mismoNombre = string.Equals(
-                usuario.NombresApellidos.Trim(),
-                vm.NombreCompleto.Trim(),
-                StringComparison.OrdinalIgnoreCase);
-
-            bool mismoCorreo = string.Equals(
-                usuario.Correo.Trim(),
-                vm.Correo.Trim(),
-                StringComparison.OrdinalIgnoreCase);
-
-            if (!mismoNombre || !mismoCorreo)
-            {
-                ModelState.AddModelError(
-                    "",
-                    "El nombre y correo deben coincidir con tu cuenta.");
-
-                return View(vm);
-            }
-
-            // VALIDAR DNI DE LA CUENTA
-            if (string.IsNullOrEmpty(usuario.DNI) ||
-                usuario.DNI != vm.Dni)
-            {
-                ModelState.AddModelError(
-                    nameof(vm.Dni),
-                    "El DNI no coincide con el registrado en tu cuenta.");
-
-                return View(vm);
-            }
 
             // OBTENER TIPO DE RECLAMO
             var tipo = await _db.TiposReclamo

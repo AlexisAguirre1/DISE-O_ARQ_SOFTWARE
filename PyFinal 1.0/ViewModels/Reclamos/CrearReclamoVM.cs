@@ -1,32 +1,19 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
 namespace PyFinal_1.ViewModels.Reclamos
 {
     public class CrearReclamoVM
     {
-        // DNI DEL SOLICITANTE
-        [Required(ErrorMessage = "El DNI es obligatorio.")]
-        [RegularExpression(@"^[0-9]{8}$",
-            ErrorMessage = "El DNI debe tener 8 dígitos numéricos.")]
-        [Display(Name = "DNI del solicitante")]
-        public string Dni { get; set; } = string.Empty;
-
-        // NOMBRES Y APELLIDOS
-        [Required(ErrorMessage = "Los nombres son obligatorios.")]
-        [StringLength(100, MinimumLength = 3,
-            ErrorMessage = "El nombre debe tener entre 3 y 100 caracteres.")]
-        [Display(Name = "Nombres y apellidos")]
+        // DATOS DE LA CUENTA (solo lectura): los carga el controlador, no el formulario
         public string NombreCompleto { get; set; } = string.Empty;
 
-        // CORREO ELECTRÓNICO
-        [Required(ErrorMessage = "El correo es obligatorio.")]
-        [EmailAddress(ErrorMessage = "Ingrese un correo válido.")]
-        [StringLength(100,
-            ErrorMessage = "El correo no puede superar 100 caracteres.")]
-        [Display(Name = "Correo electrónico")]
         public string Correo { get; set; } = string.Empty;
+
+        public string Dni { get; set; } = string.Empty;
+
+        public string DniEnmascarado =>
+            Dni.Length == 8 ? "••••" + Dni[^4..] : "No registrado";
 
         // TIPO DE RECLAMO
         [Required(ErrorMessage = "Seleccione el tipo de reclamo.")]

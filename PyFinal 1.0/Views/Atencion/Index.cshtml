@@ -557,22 +557,7 @@
 
             </div>
 
-            <nav class="menu">
-
-                <a href="@Url.Action("Index", "Home")">
-                    🏠 Home
-                </a>
-
-                <a href="@Url.Action("Index", "Reclamos")">
-                    📋 Mis Reclamos
-                </a>
-
-                <a href="@Url.Action("Index", "Atencion")"
-                   class="active">
-                    🛠️ Atención de reclamos
-                </a>
-
-            </nav>
+            <partial name="_MenuLateral" />
 
             <div class="sidebar-bottom">
 
@@ -822,6 +807,42 @@
                                                             ✅ Marcar resuelto
                                                         </button>
 
+                                                    </div>
+
+                                                </form>
+                                            }
+                                            else if (r.IdEstado == 4)
+                                            {
+                                                <form method="post"
+                                                      action="@Url.Action("Cerrar", "Atencion")"
+                                                      class="form-atencion">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="codigo"
+                                                           value="@r.Codigo" />
+
+                                                    <label>
+                                                        Comentario de cierre
+                                                    </label>
+
+                                                    <textarea name="comentario"
+                                                      class="observacion"
+                                                      maxlength="220"
+                                                      placeholder="Opcional: resumen de la solución entregada..."></textarea>
+
+                                                    <span class="ayuda">
+                                                        Al cerrar, el reclamo ya no
+                                                        podrá modificarse.
+                                                    </span>
+
+                                                    <div class="acciones">
+                                                        <button type="submit"
+                                                                class="btn-resolver"
+                                                                onclick="return confirm('¿Deseas cerrar este reclamo? Ya no podrá modificarse.');">
+                                                            🔒 Cerrar reclamo
+                                                        </button>
                                                     </div>
 
                                                 </form>

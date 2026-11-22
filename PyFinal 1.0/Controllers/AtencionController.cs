@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
 using PyFinal_1.Models;
 using System.Security.Claims;
+using PyFinal_1.Domain.Enums;
+using PyFinal_1.Domain.Estados;
 
 namespace PyFinal_1.Controllers
 {
@@ -13,6 +15,7 @@ namespace PyFinal_1.Controllers
     {
         private const int EnProceso = 3;
         private const int Resuelto = 4;
+        private const int Cerrado = 5;
 
         private readonly ReclamosDbContext _db;
         private readonly ILogger<AtencionController> _logger;
@@ -79,6 +82,132 @@ namespace PyFinal_1.Controllers
                 codigo,
                 comentario,
                 resolver: true);
+        }
+        // CERRAR RECLAMO RESUELTO
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cerrar(
+            string codigo,
+            string? comentario)
+        {
+            if (!ObtenerIdOperario(out int idOperario))
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(codigo))
+            {
+                TempData["Error"] =
+                    "Debes seleccionar un reclamo.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            comentario = comentario?.Trim() ?? "";
+
+            if (comentario.Length > 220)
+            {
+                TempData["Error"] =
+                    "El comentario no puede superar 220 caracteres.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                // BUSCAR RECLAMO ASIGNADO A ESTE OPERARIO
+                var reclamo = await _db.Reclamos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r =>
+                        r.CodigoReclamo == codigo &&
+                        r.IdOperario == idOperario);
+
+                if (reclamo == null)
+                {
+                    TempData["Error"] =
+                        "Este reclamo no está asignado a tu cuenta.";
+
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // PATRON STATE: EL ESTADO ACTUAL DECIDE SI SE PUEDE CERRAR
+                EstadoReclamo estadoActual = reclamo.IdEstado switch
+                {
+                    1 => EstadoReclamo.Registrado,
+                    2 => EstadoReclamo.EnEvaluacion,
+                    3 => EstadoReclamo.EnProceso,
+                    4 => EstadoReclamo.Resuelto,
+                    5 => EstadoReclamo.Cerrado,
+                    _ => EstadoReclamo.Desconocido
+                };
+
+                var contexto = new ReclamoContexto(estadoActual);
+                var resultado = contexto.Cerrar();
+
+                if (!resultado.Exito ||
+                    contexto.EstadoActual != EstadoReclamo.Cerrado)
+                {
+                    TempData["Error"] = resultado.Mensaje;
+
+                    return RedirectToAction(nameof(Index));
+                }
+
+                DateTime? fechaActual = DateTime.Now;
+
+                // TRANSACCION PARA NO PERDER EL HISTORIAL
+                await using var transaccion =
+                    await _db.Database.BeginTransactionAsync();
+
+                // ACTUALIZAR SOLO SI SIGUE ASIGNADO Y RESUELTO
+                int actualizados = await _db.Reclamos
+                    .Where(r =>
+                        r.IdReclamo == reclamo.IdReclamo &&
+                        r.IdOperario == idOperario &&
+                        r.IdEstado == Resuelto)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(r => r.IdEstado, Cerrado)
+                        .SetProperty(r => r.FechaActualizacion, fechaActual));
+
+                if (actualizados != 1)
+                {
+                    TempData["Error"] =
+                        "El reclamo cambió. Actualiza la página.";
+
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // GUARDAR EL CAMBIO EN EL HISTORIAL
+                _db.HistorialReclamos.Add(
+                    new HistorialReclamoBD
+                    {
+                        IdReclamo = reclamo.IdReclamo,
+                        IdEstadoAnterior = Resuelto,
+                        IdEstadoNuevo = Cerrado,
+                        IdUsuarioModificacion = idOperario,
+                        Comentario = string.IsNullOrWhiteSpace(comentario)
+                            ? "Reclamo cerrado por el operario."
+                            : "Reclamo cerrado. " + comentario,
+                        FechaCambio = fechaActual
+                    });
+
+                await _db.SaveChangesAsync();
+
+                await transaccion.CommitAsync();
+
+                TempData["Ok"] =
+                    $"El reclamo {codigo} fue cerrado correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error cerrando reclamo {Codigo}",
+                    codigo);
+
+                TempData["Error"] =
+                    "No se pudo cerrar el reclamo. " +
+                    "Revisa la base de datos e inténtalo nuevamente.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // PROCESAR CAMBIO Y REGISTRAR HISTORIAL

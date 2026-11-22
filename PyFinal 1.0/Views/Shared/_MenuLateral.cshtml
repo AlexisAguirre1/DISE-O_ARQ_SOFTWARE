@@ -1,0 +1,65 @@
+﻿@{
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var accion = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool solicitante = User.IsInRole("Solicitante");
+    bool supervisor = User.IsInRole("Supervisor");
+    bool operario = User.IsInRole("Operario");
+
+    string Activo(bool coincide) => coincide ? "active" : "";
+}
+
+<nav class="menu">
+
+    <a href="@Url.Action("Index", "Home")"
+       class="@Activo(controlador == "Home")">
+        🏠 Home
+    </a>
+
+    @if (solicitante)
+    {
+        <a href="@Url.Action("Index", "Reclamos")"
+           class="@Activo(controlador == "Reclamos" && accion == "Index")">
+            📋 Mis Reclamos
+        </a>
+
+        <a href="@Url.Action("Create", "Reclamos")"
+           class="@Activo(controlador == "Reclamos" && accion == "Create")">
+            ➕ Nuevo Reclamo
+        </a>
+
+        <a href="@Url.Action("Index", "Seguimiento")"
+           class="@Activo(controlador == "Seguimiento")">
+            🔎 Seguimiento
+        </a>
+    }
+    else if (supervisor)
+    {
+        <a href="@Url.Action("Index", "Reclamos")"
+           class="@Activo(controlador == "Reclamos")">
+            📋 Reclamos
+        </a>
+
+        <a href="@Url.Action("Index", "Derivaciones")"
+           class="@Activo(controlador == "Derivaciones")">
+            🔄 Derivación
+        </a>
+
+        <a href="@Url.Action("Index", "Reportes")"
+           class="@Activo(controlador == "Reportes")">
+            📊 Reportes
+        </a>
+
+        <a href="@Url.Action("Index", "Seguimiento")"
+           class="@Activo(controlador == "Seguimiento")">
+            🔎 Seguimiento
+        </a>
+    }
+    else if (operario)
+    {
+        <a href="@Url.Action("Index", "Atencion")"
+           class="@Activo(controlador == "Atencion")">
+            🛠️ Reclamos asignados
+        </a>
+    }
+
+</nav>

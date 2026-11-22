@@ -12,6 +12,9 @@
     int proceso = reclamos.Count(x => x.Estado == EstadoReclamo.EnProceso);
     int registrados = reclamos.Count(x => x.Estado == EstadoReclamo.Registrado);
     int evaluacion = reclamos.Count(x => x.Estado == EstadoReclamo.EnEvaluacion);
+
+    bool esSupervisor = User.IsInRole("Supervisor");
+    bool esSolicitante = User.IsInRole("Solicitante");
 }
 
 <!DOCTYPE html>
@@ -34,14 +37,12 @@
         }
 
         /* ESTRUCTURA GENERAL */
-
         .app {
             display: flex;
             min-height: 100vh;
         }
 
         /* MENU LATERAL */
-
         .sidebar {
             width: 260px;
             flex-shrink: 0;
@@ -130,7 +131,6 @@
         }
 
         /* CONTENIDO PRINCIPAL */
-
         .workspace {
             flex: 1;
             min-width: 0;
@@ -166,7 +166,6 @@
         }
 
         /* CABECERA */
-
         .hero {
             padding: 15px 8px 28px;
             animation: aparecer .7s ease both;
@@ -184,7 +183,6 @@
             }
 
         /* TARJETAS ESTADISTICAS */
-
         .stats {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -255,7 +253,6 @@
         }
 
         /* PANEL RECLAMOS */
-
         .panel {
             background: white;
             padding: 26px;
@@ -284,7 +281,6 @@
             }
 
         /* BOTON NUEVO RECLAMO */
-
         .btn-new {
             background: linear-gradient(120deg, #2583fc, #0056f5);
             color: white;
@@ -303,7 +299,6 @@
             }
 
         /* BUSCADOR Y FILTROS */
-
         .search-row {
             display: flex;
             justify-content: space-between;
@@ -374,7 +369,6 @@
             }
 
         /* TABLA */
-
         .table-scroll {
             overflow-x: auto;
         }
@@ -416,7 +410,6 @@
         }
 
         /* ESTADOS */
-
         .estado {
             display: inline-flex;
             align-items: center;
@@ -462,7 +455,6 @@
         }
 
         /* BOTON DE DETALLES */
-
         .btn-detalle {
             border: 1px solid #e2e9f6;
             background: #f7faff;
@@ -480,8 +472,25 @@
                 transform: scale(1.08);
             }
 
-        /* MENSAJES Y PIE */
+        /* MENSAJES */
+        .mensaje-servidor {
+            padding: 13px 18px;
+            margin-bottom: 18px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
 
+        .mensaje-ok {
+            background: #def8ef;
+            color: #11855e;
+        }
+
+        .mensaje-error {
+            background: #ffe8ed;
+            color: #a92a45;
+        }
+
+        /* PIE */
         .footer {
             padding-top: 22px;
             font-size: 14px;
@@ -496,7 +505,6 @@
         }
 
         /* VENTANA DE DETALLES */
-
         .detalle-modal {
             width: min(480px, 92vw);
             border: none;
@@ -522,10 +530,16 @@
                 overflow-wrap: anywhere;
             }
 
-        .modal-cerrar {
-            display: block;
+        .modal-acciones {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
             margin-top: 24px;
-            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .modal-cerrar {
             border: none;
             border-radius: 10px;
             padding: 12px 23px;
@@ -539,8 +553,24 @@
                 background: #0051cf;
             }
 
-        /* ANIMACIONES */
+        /* NUEVO BOTON PARA EVALUAR */
+        .btn-evaluar {
+            background: linear-gradient(120deg, #2583fc, #0056f5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s;
+        }
 
+            .btn-evaluar:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px #0866f550;
+            }
+
+        /* ANIMACIONES */
         @@keyframes aparecer {
             from {
                 opacity: 0;
@@ -553,8 +583,7 @@
             }
         }
 
-        /* DISEÑO RESPONSIVO */
-
+        /* RESPONSIVO */
         @@media (max-width: 1100px) {
             .stats {
                 grid-template-columns: repeat(2, 1fr);
@@ -623,90 +652,85 @@
 </head>
 
 <body>
-
     <div class="app">
 
         <!-- MENU LATERAL -->
-
         <aside class="sidebar">
+
             <div class="logo" aria-label="Cliente360">
-                <svg class="logo-icon" viewBox="0 0 48 48" role="img" aria-label="Logo Cliente360">
+                <svg class="logo-icon"
+                     viewBox="0 0 48 48"
+                     role="img"
+                     aria-label="Logo Cliente360">
+
                     <defs>
-                        <linearGradient id="c360-barras" x1="0" y1="1" x2="1" y2="0">
+                        <linearGradient id="c360-barras"
+                                        x1="0" y1="1" x2="1" y2="0">
                             <stop offset="0%" stop-color="#11d0ed" />
                             <stop offset="100%" stop-color="#1357f6" />
                         </linearGradient>
                     </defs>
-                    <path d="M5 30 Q5 27 8 26 L13 25 Q16 24 16 28 L16 40 Q16 43 13 43 L8 43 Q5 43 5 40Z" fill="#19baf6" />
-                    <path d="M19 21 Q19 18 22 17 L27 16 Q30 15 30 19 L30 40 Q30 43 27 43 L22 43 Q19 43 19 40Z" fill="#2789fd" />
-                    <path d="M33 11 Q33 8 36 7 L41 5 Q44 4 44 8 L44 40 Q44 43 41 43 L36 43 Q33 43 33 40Z" fill="url(#c360-barras)" />
+
+                    <path d="M5 30 Q5 27 8 26 L13 25 Q16 24 16 28 L16 40 Q16 43 13 43 L8 43 Q5 43 5 40Z"
+                          fill="#19baf6" />
+
+                    <path d="M19 21 Q19 18 22 17 L27 16 Q30 15 30 19 L30 40 Q30 43 27 43 L22 43 Q19 43 19 40Z"
+                          fill="#2789fd" />
+
+                    <path d="M33 11 Q33 8 36 7 L41 5 Q44 4 44 8 L44 40 Q44 43 41 43 L36 43 Q33 43 33 40Z"
+                          fill="url(#c360-barras)" />
                 </svg>
-                <span class="logo-name">Cliente<span class="logo-360">360</span></span>
+
+                <span class="logo-name">
+                    Cliente<span class="logo-360">360</span>
+                </span>
             </div>
 
-            <nav class="menu">
-
-                <a href="@Url.Action("Index", "Reclamos")"
-                   class="active">
-                    📋 Mis Reclamos
-                </a>
-
-                @if (User.IsInRole("Solicitante"))
-                {
-                    <a href="@Url.Action("Create", "Reclamos")">
-                        ➕ Nuevo Reclamo
-                    </a>
-                }
-
-                <a href="@Url.Action("Index", "Home")">
-                    🏠 Home
-                </a>
-
-                <a href="@Url.Action("Index", "Seguimiento")">
-                    🔎 Seguimiento
-                </a>
-
-                @if (User.IsInRole("Supervisor"))
-                {
-                    <a href="@Url.Action("Index", "Derivaciones")">
-                        🔄 Derivación
-                    </a>
-                }
-
-            </nav>
+            <partial name="_MenuLateral" />
 
             <div class="sidebar-bottom">
+
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <form method="post" action="@Url.Action("Logout", "Account")">
+                    <form method="post"
+                          action="@Url.Action("Logout", "Account")">
+
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn-logout">🚪 Cerrar sesión</button>
+
+                        <button type="submit" class="btn-logout">
+                            🚪 Cerrar sesión
+                        </button>
                     </form>
                 }
                 else
                 {
-                    <a href="@Url.Action("Login", "Account")">🔐 Iniciar sesión</a>
+                    <a href="@Url.Action("Login", "Account")">
+                        🔐 Iniciar sesión
+                    </a>
                 }
-            </div>
 
+            </div>
         </aside>
 
-        <!-- ZONA PRINCIPAL -->
-
+        <!-- CONTENIDO PRINCIPAL -->
         <div class="workspace">
 
             <header class="topbar">
-                <strong>Centro de atención al cliente</strong>
+
+                <strong>
+                    Centro de atención al cliente
+                </strong>
 
                 <div class="account">
-                    👤 @(User.Identity?.Name ?? "Panel de reclamos") · @(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Invitado")
+                    👤 @(User.Identity?.Name ?? "Panel de reclamos")
+                    · @(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Invitado")
                 </div>
+
             </header>
 
             <main class="content">
 
                 <!-- TITULO -->
-
                 <section class="hero">
 
                     <h1>📁 Mis reclamos</h1>
@@ -717,8 +741,28 @@
 
                 </section>
 
-                <!-- ESTADISTICAS -->
+                <!-- MENSAJES DE EXITO Y ERROR -->
+                @if (TempData["Ok"] != null)
+                {
+                    <div class="mensaje-servidor mensaje-ok"
+                         role="status">
 
+                        @TempData["Ok"]
+
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="mensaje-servidor mensaje-error"
+                         role="alert">
+
+                        @TempData["Error"]
+
+                    </div>
+                }
+
+                <!-- ESTADISTICAS -->
                 <section class="stats">
 
                     <div class="stat-card">
@@ -760,40 +804,46 @@
                 </section>
 
                 <!-- PANEL DE RECLAMOS -->
-
                 <section class="panel">
 
                     <div class="panel-header">
 
                         <div>
                             <h2>📋 Listado de reclamos</h2>
-                            <p>Consulta los detalles y estados actuales.</p>
+
+                            <p>
+                                Consulta los detalles y estados actuales.
+                            </p>
                         </div>
 
-                        @if (User.IsInRole("Solicitante"))
+                        @if (esSolicitante)
                         {
                             <a href="@Url.Action("Create", "Reclamos")"
                                class="btn-new">
+
                                 ＋ Registrar nuevo reclamo
+
                             </a>
                         }
 
                     </div>
 
                     <!-- BUSCADOR Y FILTROS -->
-
                     <div class="search-row">
 
                         <div class="search-box">
+
                             <span>🔍</span>
 
                             <input type="search"
                                    id="buscadorReclamos"
                                    placeholder="Buscar código, tipo o descripción..."
                                    aria-label="Buscar reclamos" />
+
                         </div>
 
                         <div class="filter-box">
+
                             <span>⚙️</span>
 
                             <select id="filtroEstado"
@@ -824,12 +874,12 @@
                                 </option>
 
                             </select>
+
                         </div>
 
                     </div>
 
-                    <!-- TABLA -->
-
+                    <!-- TABLA DE RECLAMOS -->
                     <div class="table-scroll">
 
                         <table id="tablaReclamos">
@@ -869,7 +919,8 @@
                                         _ => "Desconocido"
                                     };
 
-                                    var fechaTexto = reclamo.FechaRegistro == DateTime.MinValue
+                                    var fechaTexto =
+                                    reclamo.FechaRegistro == DateTime.MinValue
                                     ? "Sin fecha"
                                     : reclamo.FechaRegistro.ToString("dd/MM/yyyy");
 
@@ -919,28 +970,26 @@
 
                     </div>
 
-                    <!-- SIN RESULTADOS -->
-
+                    <!-- MENSAJE SIN RESULTADOS -->
                     <div class="sin-resultados" id="sinResultados">
                         🔍 No se encontraron reclamos.
                     </div>
 
                     <div class="footer">
+
                         Mostrando
                         <strong id="cantidadVisible">@total</strong>
                         de @total reclamos
+
                     </div>
 
                 </section>
 
             </main>
-
         </div>
-
     </div>
 
     <!-- VENTANA DE DETALLES -->
-
     <dialog class="detalle-modal" id="detalleModal">
 
         <h2>📋 Detalle del reclamo</h2>
@@ -970,27 +1019,67 @@
             <span id="modalEstado"></span>
         </p>
 
-        <button type="button"
-                class="modal-cerrar"
-                id="cerrarModal">
-            Cerrar
-        </button>
+        <!-- ACCIONES DEL SUPERVISOR -->
+        <div class="modal-acciones">
+
+            @if (esSupervisor)
+            {
+                <form id="formEvaluar"
+                      method="post"
+                      action="@Url.Action("Evaluar", "Reclamos")"
+                      hidden>
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="codigo"
+                           id="evaluarCodigo" />
+
+                    <button type="submit"
+                            class="btn-evaluar">
+
+                        ✅ Evaluar reclamo
+
+                    </button>
+
+                </form>
+            }
+
+            <button type="button"
+                    class="modal-cerrar"
+                    id="cerrarModal">
+
+                Cerrar
+
+            </button>
+
+        </div>
 
     </dialog>
 
     <!-- JAVASCRIPT -->
-
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 
-            const buscador = document.getElementById("buscadorReclamos");
-            const filtroEstado = document.getElementById("filtroEstado");
-            const filas = document.querySelectorAll(".reclamo-row");
-            const cantidadVisible = document.getElementById("cantidadVisible");
-            const sinResultados = document.getElementById("sinResultados");
+            const buscador =
+                document.getElementById("buscadorReclamos");
 
-            // Normalizar texto para buscar con o sin tildes
+            const filtroEstado =
+                document.getElementById("filtroEstado");
 
+            const filas =
+                document.querySelectorAll(".reclamo-row");
+
+            const cantidadVisible =
+                document.getElementById("cantidadVisible");
+
+            const sinResultados =
+                document.getElementById("sinResultados");
+
+            const modal =
+                document.getElementById("detalleModal");
+
+            // NORMALIZAR TEXTO
             function normalizar(texto) {
                 return (texto || "")
                     .toLowerCase()
@@ -999,8 +1088,7 @@
                     .trim();
             }
 
-            // BUSCADOR Y FILTRO DE ESTADOS
-
+            // BUSCAR Y FILTRAR RECLAMOS
             function filtrarReclamos() {
 
                 const texto = normalizar(buscador.value);
@@ -1018,19 +1106,21 @@
 
                     const estado = fila.dataset.estado;
 
-                    const coincideTexto = contenido.includes(texto);
+                    const coincideTexto =
+                        contenido.includes(texto);
 
                     const coincideEstado =
                         estadoSeleccionado === "Todos" ||
-                        normalizar(estado) === normalizar(estadoSeleccionado);
+                        normalizar(estado) ===
+                        normalizar(estadoSeleccionado);
 
                     if (coincideTexto && coincideEstado) {
                         fila.style.display = "";
                         visibles++;
-                    } else {
+                    }
+                    else {
                         fila.style.display = "none";
                     }
-
                 });
 
                 cantidadVisible.textContent = visibles;
@@ -1039,15 +1129,19 @@
                     visibles === 0 ? "block" : "none";
             }
 
-            buscador.addEventListener("input", filtrarReclamos);
+            buscador.addEventListener(
+                "input",
+                filtrarReclamos
+            );
 
-            filtroEstado.addEventListener("change", filtrarReclamos);
+            filtroEstado.addEventListener(
+                "change",
+                filtrarReclamos
+            );
 
-            // DETALLES DEL RECLAMO
-
-            const modal = document.getElementById("detalleModal");
-
-            const botonesDetalle = document.querySelectorAll(".btn-detalle");
+            // ABRIR DETALLES
+            const botonesDetalle =
+                document.querySelectorAll(".btn-detalle");
 
             botonesDetalle.forEach(function (boton) {
 
@@ -1070,21 +1164,34 @@
                     document.getElementById("modalEstado").textContent =
                         fila.dataset.estado;
 
+                    // MOSTRAR EVALUAR SOLO AL SUPERVISOR
+                    // Y SOLO SI EL ESTADO ES REGISTRADO
+                    const formEvaluar =
+                        document.getElementById("formEvaluar");
+
+                    if (formEvaluar) {
+
+                        const puedeEvaluar =
+                            fila.dataset.estado === "Registrado";
+
+                        formEvaluar.hidden = !puedeEvaluar;
+
+                        document.getElementById("evaluarCodigo").value =
+                            fila.dataset.codigo;
+                    }
+
                     modal.showModal();
-
                 });
-
             });
 
             // CERRAR DETALLES
-
             document.getElementById("cerrarModal")
                 .addEventListener("click", function () {
                     modal.close();
                 });
 
+            // INICIALIZAR FILTRO
             filtrarReclamos();
-
         });
     </script>
 

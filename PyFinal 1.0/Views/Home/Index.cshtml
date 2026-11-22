@@ -476,55 +476,7 @@
                 </span>
 
             </div>
-
-            <nav class="menu">
-
-                <!-- HOME -->
-
-                <a href="@Url.Action("Index", "Home")"
-                   class="active">
-                    🏠 Home
-                </a>
-
-                <!-- MIS RECLAMOS -->
-
-                <a href="@Url.Action("Index", "Reclamos")">
-                    📋 Mis Reclamos
-                </a>
-
-                <!-- NUEVO RECLAMO -->
-                @if (solicitante)
-                {
-                    <a href="@Url.Action("Create", "Reclamos")">
-                        ➕ Nuevo Reclamo
-                    </a>
-                }
-
-                <!-- SEGUIMIENTO -->
-                @if (solicitante || supervisor)
-                {
-                    <a href="@Url.Action("Index", "Seguimiento")">
-                        🔎 Seguimiento
-                    </a>
-                }
-
-                <!-- ATENCION DEL OPERARIO -->
-                @if (operario)
-                {
-                    <a href="@Url.Action("Index", "Atencion")">
-                        🛠️ Atención de reclamos
-                    </a>
-                }
-
-                <!-- DERIVACION DEL SUPERVISOR -->
-                @if (supervisor)
-                {
-                    <a href="@Url.Action("Index", "Derivaciones")">
-                        🔄 Derivación
-                    </a>
-                }
-
-            </nav>
+            <partial name="_MenuLateral" />
 
             <div class="sidebar-bottom">
 

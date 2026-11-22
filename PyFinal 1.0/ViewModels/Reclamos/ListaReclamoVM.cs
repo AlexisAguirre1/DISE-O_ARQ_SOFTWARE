@@ -9,4 +9,6 @@ public class ListaReclamoVM
     public string Descripcion { get; set; } = string.Empty;
     public DateTime FechaRegistro { get; set; }
     public EstadoReclamo Estado { get; set; }
+    public List<HistorialItemVM> Historial { get; set; } = new();
 }
+ 

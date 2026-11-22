@@ -530,6 +530,51 @@
                 transition: none !important;
             }
         }
+
+        /* HISTORIAL DE CAMBIOS */
+
+        .historial {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .hist-item {
+            border: 1px solid #e3ebf8;
+            background: #f8fbff;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .hist-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #7184a4;
+            margin-bottom: 6px;
+        }
+
+        .hist-titulo {
+            font-weight: 700;
+            color: #101b3e;
+            font-size: 14px;
+        }
+
+        .hist-detalle {
+            margin: 6px 0 0;
+            color: #3b4d6e;
+            font-size: 13px;
+            line-height: 1.55;
+            overflow-wrap: anywhere;
+        }
+
+        .hist-vacio {
+            color: #8190a8;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -550,19 +595,7 @@
                 <span class="logo-name">Cliente<span class="logo-360">360</span></span>
             </div>
 
-            <nav class="menu">
-                <a href="@Url.Action("Index", "Home")">🏠 Home</a>
-                <a href="@Url.Action("Index", "Reclamos")">📋 Mis Reclamos</a>
-                @if (solicitante)
-                {
-                    <a href="@Url.Action("Create", "Reclamos")">➕ Nuevo Reclamo</a>
-                }
-                <a href="@Url.Action("Index", "Seguimiento")" class="active">🔎 Seguimiento</a>
-                @if (supervisor)
-                {
-                    <a href="@Url.Action("Index", "Derivaciones")">🔄 Derivación</a>
-                }
-            </nav>
+            <partial name="_MenuLateral" />
 
             <div class="sidebar-bottom">
                 <form method="post" action="@Url.Action("Logout", "Account")">
@@ -629,7 +662,8 @@
                                         data-descripcion="@reclamo.Descripcion"
                                         data-fecha="@fecha"
                                         data-estado="@estado"
-                                        data-paso="@paso">
+                                        data-paso="@paso"
+                                        data-historial="@System.Text.Json.JsonSerializer.Serialize(reclamo.Historial)">
                                     <span class="claim-code">@reclamo.Codigo</span>
                                     <span class="claim-type">@reclamo.TipoReclamo</span>
                                     <span class="claim-date">📅 @fecha</span>
@@ -667,10 +701,13 @@
                                 </div>
                                 <h2 class="line-title">📍 Seguimiento del trámite</h2>
                                 <div class="timeline" id="timeline"></div>
+                                <h2 class="line-title">📜 Historial de cambios</h2>
+                                <div class="historial" id="historialLista"></div>
+
                                 <div class="note">
-                                    ℹ️ El seguimiento muestra el estado actual guardado en SQL Server.
-                                    Las etapas representan el proceso general de atención; para conocer las fechas
-                                    de cada cambio será necesario integrar el historial.
+                                    ℹ️ Las etapas muestran el proceso general de atención. El historial registra
+                                    cada cambio real del reclamo, con su fecha, quién lo realizó y la observación
+                                    entregada.
                                 </div>
                                 <a href="@Url.Action("Index", "Reclamos")" class="btn-back">← Volver a Mis Reclamos</a>
                             </div>
@@ -743,6 +780,61 @@
                     paso.appendChild(punto);
                     paso.appendChild(contenido);
                     timeline.appendChild(paso);
+                });
+
+                // HISTORIAL DE CAMBIOS
+
+                const lista = document.getElementById("historialLista");
+                lista.replaceChildren();
+
+                let historial = [];
+
+                try {
+                    historial = JSON.parse(datos.historial || "[]");
+                } catch (e) {
+                    historial = [];
+                }
+
+                if (historial.length === 0) {
+                    const vacio = document.createElement("p");
+                    vacio.className = "hist-vacio";
+                    vacio.textContent = "Todavía no hay cambios registrados.";
+                    lista.appendChild(vacio);
+                }
+
+                historial.forEach(function (h) {
+
+                    const item = document.createElement("div");
+                    item.className = "hist-item";
+
+                    const top = document.createElement("div");
+                    top.className = "hist-top";
+
+                    const fecha = document.createElement("span");
+                    fecha.textContent = "📅 " + h.Fecha;
+
+                    top.appendChild(fecha);
+                    if (h.Autor) {
+                        const autor = document.createElement("span");
+                        autor.textContent = "👤 " + h.Autor;
+                        top.appendChild(autor);
+                    }
+
+                    const titulo = document.createElement("div");
+                    titulo.className = "hist-titulo";
+                    titulo.textContent = h.Titulo;
+
+                    item.appendChild(top);
+                    item.appendChild(titulo);
+
+                    if (h.Detalle) {
+                        const detalle = document.createElement("p");
+                        detalle.className = "hist-detalle";
+                        detalle.textContent = h.Detalle;
+                        item.appendChild(detalle);
+                    }
+
+                    lista.appendChild(item);
                 });
             }
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PyFinal_1.Data;
 using PyFinal_1.Models;
+using PyFinal_1.Services;
 using PyFinal_1.ViewModels.Reclamos;
 using PyFinal_1.Domain.Enums;
 using PyFinal_1.Domain.Estados;
@@ -16,16 +17,19 @@ namespace PyFinal_1.Controllers
     {
         private readonly ReclamosDbContext _db;
         private readonly ILogger<ReclamosController> _logger;
+        private readonly EvidenciaService _evidencias;
 
         private readonly ConfiguracionSistema configuracion =
             ConfiguracionSistema.Instancia;
 
         public ReclamosController(
             ReclamosDbContext db,
-            ILogger<ReclamosController> logger)
+            ILogger<ReclamosController> logger,
+            EvidenciaService evidencias)
         {
             _db = db;
             _logger = logger;
+            _evidencias = evidencias;
         }
 
         // MOSTRAR RECLAMOS SEGUN EL ROL
@@ -200,11 +204,18 @@ namespace PyFinal_1.Controllers
                         nameof(vm.Evidencia),
                         "El archivo supera el tamaño permitido.");
                 }
-                else
+                else if (vm.Evidencia.Length == 0)
                 {
                     ModelState.AddModelError(
                         nameof(vm.Evidencia),
-                        "La carga de evidencias aún no está disponible.");
+                        "El archivo está vacío.");
+                }
+                else if (!await _evidencias.ContenidoValidoAsync(
+                             vm.Evidencia, ext))
+                {
+                    ModelState.AddModelError(
+                        nameof(vm.Evidencia),
+                        "El contenido del archivo no coincide con su formato.");
                 }
             }
 
@@ -259,18 +270,41 @@ namespace PyFinal_1.Controllers
                 FechaRegistro = DateTime.Now
             };
 
+            // RECLAMO Y EVIDENCIA SE GUARDAN JUNTOS O NO SE GUARDA NADA
+            EvidenciaBD? evidencia = null;
+
             try
             {
+                await using var transaccion =
+                    await _db.Database.BeginTransactionAsync();
+
                 _db.Reclamos.Add(nuevoReclamo);
                 await _db.SaveChangesAsync();
+
+                if (vm.Evidencia != null)
+                {
+                    evidencia = await _evidencias.GuardarAsync(
+                        vm.Evidencia,
+                        nuevoReclamo.IdReclamo);
+
+                    _db.Evidencias.Add(evidencia);
+                    await _db.SaveChangesAsync();
+                }
+
+                await transaccion.CommitAsync();
 
                 TempData["Ok"] =
                     $"Reclamo registrado correctamente. Código: {codigo}";
 
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
+                // Si el archivo ya se escribió pero la base falló,
+                // se elimina para no dejar archivos huérfanos
+                if (evidencia != null)
+                    _evidencias.Eliminar(evidencia.NombreArchivo);
+
                 _logger.LogError(
                     ex, "Error guardando reclamo");
 

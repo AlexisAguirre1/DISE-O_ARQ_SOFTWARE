@@ -562,6 +562,7 @@
                             <strong>📝 Descripción del problema</strong>
 
                             <p>@Model.Descripcion</p>
+                            @await Component.InvokeAsync("Evidencias", new { codigo = Model.Codigo })
 
                         </div>
 

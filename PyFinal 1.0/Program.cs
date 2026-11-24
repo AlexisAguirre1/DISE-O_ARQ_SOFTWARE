@@ -16,6 +16,8 @@ builder.Services.AddDbContext<ReclamosDbContext>(options =>
 
 // SERVICIO DE DERIVACION
 builder.Services.AddScoped<PyFinal_1.Services.DerivacionService>();
+// SERVICIO DE EVIDENCIAS
+builder.Services.AddScoped<PyFinal_1.Services.EvidenciaService>();
 
 // AUTENTICACION
 builder.Services

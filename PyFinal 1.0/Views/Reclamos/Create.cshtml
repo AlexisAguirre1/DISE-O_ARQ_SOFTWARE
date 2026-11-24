@@ -726,7 +726,8 @@
 
                         <form asp-controller="Reclamos"
                               asp-action="Create"
-                              method="post">
+                              method="post"
+                              enctype="multipart/form-data">
 
                             @Html.AntiForgeryToken()
 
@@ -877,17 +878,21 @@
                                 </div>
 
                                 <strong>
-                                    Adjuntar evidencia
+                                    Adjuntar evidencia (opcional)
                                 </strong>
 
                                 <p>
-                                    Próximamente podrás subir imágenes
-                                    o documentos PDF.
+                                    Imágenes JPG o PNG, o documentos PDF
+                                    de hasta 5 MB.
                                 </p>
 
-                                <span class="coming-soon">
-                                    Función en desarrollo
-                                </span>
+                                <input asp-for="Evidencia"
+                                       type="file"
+                                       accept=".jpg,.jpeg,.png,.pdf"
+                                       style="margin-top:12px;max-width:100%;font-size:13px" />
+
+                                <span asp-validation-for="Evidencia"
+                                      class="text-danger"></span>
 
                             </div>
 

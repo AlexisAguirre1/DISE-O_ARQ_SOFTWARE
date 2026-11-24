@@ -748,6 +748,7 @@
 
                                         <td class="descripcion">
                                             @r.Descripcion
+                                            @await Component.InvokeAsync("Evidencias", new { codigo = r.Codigo })
                                         </td>
 
                                         <td>@fecha</td>

@@ -15,6 +15,10 @@ public class ReclamoContexto
 
     public ResultadoTransicion Evaluar() => Aplicar(_estado.Evaluar());
     public ResultadoTransicion Derivar(bool hayOperarioLibre) => Aplicar(_estado.Derivar(hayOperarioLibre));
+    public ResultadoTransicion Rechazar() => Aplicar(_estado.Rechazar());
+    public ResultadoTransicion Impugnar() => Aplicar(_estado.Impugnar());
+    public ResultadoTransicion AceptarImpugnacion() => Aplicar(_estado.AceptarImpugnacion());
+    public ResultadoTransicion RechazarImpugnacion() => Aplicar(_estado.RechazarImpugnacion());
     public ResultadoTransicion Resolver() => Aplicar(_estado.Resolver());
     public ResultadoTransicion Cerrar() => Aplicar(_estado.Cerrar());
 
@@ -32,6 +36,8 @@ public class ReclamoContexto
     {
         EstadoReclamo.Registrado => new EstadoRegistrado(),
         EstadoReclamo.EnEvaluacion => new EstadoEnEvaluacion(),
+        EstadoReclamo.Rechazado => new EstadoRechazado(),
+        EstadoReclamo.Impugnado => new EstadoImpugnado(),
         EstadoReclamo.EnProceso => new EstadoEnProceso(),
         EstadoReclamo.Resuelto => new EstadoResuelto(),
         EstadoReclamo.Cerrado => new EstadoCerrado(),

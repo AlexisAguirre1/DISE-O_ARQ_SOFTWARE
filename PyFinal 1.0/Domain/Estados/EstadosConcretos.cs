@@ -15,14 +15,42 @@ public class EstadoEnEvaluacion : EstadoReclamoBase
 {
     public override EstadoReclamo Estado => EstadoReclamo.EnEvaluacion;
 
-    // Si hay un operario libre del tipo se deriva,
-    // Si no, el reclamo se queda en evaluación.
+    // Aprobar un reclamo equivale a derivarlo a un operario libre del tipo.
+    // Si no hay ninguno libre, el reclamo permanece en evaluación.
     public override ResultadoTransicion Derivar(bool hayOperarioLibre)
         => hayOperarioLibre
             ? ResultadoTransicion.Ok(EstadoReclamo.EnProceso,
                 "Reclamo derivado al operario.")
             : ResultadoTransicion.Rechazada(
                 "No hay operarios libres de este tipo. El reclamo permanece en evaluación.");
+
+    public override ResultadoTransicion Rechazar()
+        => ResultadoTransicion.Ok(EstadoReclamo.Rechazado,
+            "El reclamo fue rechazado.");
+}
+
+// Reclamo rechazado por el supervisor: el solicitante puede impugnarlo
+public class EstadoRechazado : EstadoReclamoBase
+{
+    public override EstadoReclamo Estado => EstadoReclamo.Rechazado;
+
+    public override ResultadoTransicion Impugnar()
+        => ResultadoTransicion.Ok(EstadoReclamo.Impugnado,
+            "La impugnación fue registrada.");
+}
+
+// Reclamo impugnado: el supervisor decide si acepta o rechaza la impugnación
+public class EstadoImpugnado : EstadoReclamoBase
+{
+    public override EstadoReclamo Estado => EstadoReclamo.Impugnado;
+
+    public override ResultadoTransicion AceptarImpugnacion()
+        => ResultadoTransicion.Ok(EstadoReclamo.EnEvaluacion,
+            "Impugnación aceptada: el reclamo vuelve a evaluación.");
+
+    public override ResultadoTransicion RechazarImpugnacion()
+        => ResultadoTransicion.Ok(EstadoReclamo.Rechazado,
+            "Impugnación rechazada: se mantiene el rechazo.");
 }
 
 public class EstadoEnProceso : EstadoReclamoBase
@@ -49,7 +77,7 @@ public class EstadoCerrado : EstadoReclamoBase
     public override EstadoReclamo Estado => EstadoReclamo.Cerrado;
 }
 
-// Para Aprobado, Rechazado, Impugnado y Desconocido, que aún no tienen transiciones definidas
+// Para los estados que aún no tienen transiciones definidas (Aprobado, Desconocido)
 public class EstadoSinTransiciones : EstadoReclamoBase
 {
     private readonly EstadoReclamo _estado;

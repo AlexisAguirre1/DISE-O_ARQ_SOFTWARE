@@ -19,6 +19,8 @@ namespace PyFinal_1.Data
         public DbSet<UsuarioBD> Usuarios { get; set; }
         public DbSet<HistorialReclamoBD> HistorialReclamos { get; set; }
         public DbSet<EvidenciaBD> Evidencias { get; set; }
+        public DbSet<EvaluacionBD> Evaluaciones { get; set; }
+        public DbSet<ImpugnacionBD> Impugnaciones { get; set; }
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)

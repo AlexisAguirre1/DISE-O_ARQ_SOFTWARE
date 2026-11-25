@@ -8,6 +8,10 @@ public interface IEstadoReclamo
 
     ResultadoTransicion Evaluar();
     ResultadoTransicion Derivar(bool hayOperarioLibre);
+    ResultadoTransicion Rechazar();
+    ResultadoTransicion Impugnar();
+    ResultadoTransicion AceptarImpugnacion();
+    ResultadoTransicion RechazarImpugnacion();
     ResultadoTransicion Resolver();
     ResultadoTransicion Cerrar();
 }

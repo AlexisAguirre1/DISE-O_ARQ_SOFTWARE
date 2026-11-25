@@ -8,10 +8,14 @@ public abstract class EstadoReclamoBase : IEstadoReclamo
 
     public virtual ResultadoTransicion Evaluar() => NoPermitido("evaluar");
     public virtual ResultadoTransicion Derivar(bool hayOperarioLibre) => NoPermitido("derivar");
+    public virtual ResultadoTransicion Rechazar() => NoPermitido("rechazar");
+    public virtual ResultadoTransicion Impugnar() => NoPermitido("impugnar");
+    public virtual ResultadoTransicion AceptarImpugnacion() => NoPermitido("aceptar la impugnación de");
+    public virtual ResultadoTransicion RechazarImpugnacion() => NoPermitido("rechazar la impugnación de");
     public virtual ResultadoTransicion Resolver() => NoPermitido("resolver");
     public virtual ResultadoTransicion Cerrar() => NoPermitido("cerrar");
 
     protected ResultadoTransicion NoPermitido(string accion)
         => ResultadoTransicion.Rechazada(
-            $"No se puede {accion} un reclamo en estado {Estado}.");            
+            $"No se puede {accion} un reclamo en estado {Estado}.");
 }

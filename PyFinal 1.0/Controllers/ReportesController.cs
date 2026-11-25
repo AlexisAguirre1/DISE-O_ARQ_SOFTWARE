@@ -21,7 +21,9 @@ namespace PyFinal_1.Controllers
             (2, "En evaluación"),
             (3, "En proceso"),
             (4, "Resuelto"),
-            (5, "Cerrado")
+            (5, "Cerrado"),
+            (6, "Rechazado"),
+            (7, "Impugnado")
         };
 
         private readonly ReclamosDbContext _db;

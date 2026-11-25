@@ -82,6 +82,34 @@ namespace PyFinal_1.Controllers
             return RedirectToAction(nameof(Derivar), new { codigo });
         }
 
+        // RECHAZAR UN RECLAMO CON RESPUESTA
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Rechazar(
+            string codigo,
+            string? respuesta)
+        {
+            if (string.IsNullOrWhiteSpace(codigo) ||
+                !ObtenerIdSupervisor(out int idSupervisor))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var (exito, mensaje) = await _servicio.RechazarAsync(
+                codigo, respuesta, idSupervisor);
+
+            if (exito)
+            {
+                TempData["Ok"] = mensaje;
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            TempData["Error"] = mensaje;
+
+            return RedirectToAction(nameof(Derivar), new { codigo });
+        }
+
         // FORMULARIO DE ASIGNACION
         [HttpGet]
         public async Task<IActionResult> Derivar(string codigo)

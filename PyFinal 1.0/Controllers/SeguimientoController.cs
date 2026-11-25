@@ -130,6 +130,8 @@ namespace PyFinal_1.Controllers
                         3 => EstadoReclamo.EnProceso,
                         4 => EstadoReclamo.Resuelto,
                         5 => EstadoReclamo.Cerrado,
+                        6 => EstadoReclamo.Rechazado,
+                        7 => EstadoReclamo.Impugnado,
                         _ => EstadoReclamo.Desconocido
                     },
 
@@ -152,6 +154,8 @@ namespace PyFinal_1.Controllers
             3 => "En proceso",
             4 => "Resuelto",
             5 => "Cerrado",
+            6 => "Rechazado",
+            7 => "Impugnado",
             _ => "Desconocido"
         };
 
@@ -168,7 +172,7 @@ namespace PyFinal_1.Controllers
         {
             if (esSolicitante)
                 return string.Empty;
-
+                
             string rol = idRol switch
             {
                 1 => "Solicitante",

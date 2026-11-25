@@ -147,6 +147,8 @@ public class DerivacionService
     }
 
     // Guarda la derivación: actualiza el reclamo y escribe el historial
+    // Aprobar un reclamo = derivarlo a un operario libre.
+    // Actualiza el reclamo y registra la evaluación y el historial.
     public async Task<(bool Exito, string Mensaje)> DerivarAsync(
         string codigo, int operarioId, int idSupervisor)
     {
@@ -183,10 +185,21 @@ public class DerivacionService
 
         int estadoAnterior = reclamo.IdEstado;
         int estadoNuevo = MapearIdEstado(resultado.NuevoEstado!.Value);
+        DateTime ahora = DateTime.Now;
 
         reclamo.IdOperario = operarioId;
         reclamo.IdEstado = estadoNuevo;
-        reclamo.FechaActualizacion = DateTime.Now;
+        reclamo.FechaActualizacion = ahora;
+
+        // Queda registrada la decisión del supervisor
+        _db.Evaluaciones.Add(new EvaluacionBD
+        {
+            IdReclamo = reclamo.IdReclamo,
+            IdSupervisor = idSupervisor,
+            Resultado = "Aprobado",
+            Respuesta = null,
+            FechaEvaluacion = ahora
+        });
 
         _db.HistorialReclamos.Add(new HistorialReclamoBD
         {
@@ -194,14 +207,84 @@ public class DerivacionService
             IdEstadoAnterior = estadoAnterior,
             IdEstadoNuevo = estadoNuevo,
             IdUsuarioModificacion = idSupervisor,
-            Comentario = $"Derivado a {operario.NombresApellidos}",
-            FechaCambio = DateTime.Now
+            Comentario = $"Aprobado y derivado a {operario.NombresApellidos}",
+            FechaCambio = ahora
         });
 
-        // Un solo SaveChanges: reclamo e historial se guardan juntos o no se guarda nada
+        // Un solo SaveChanges: reclamo, evaluación e historial
+        // se guardan juntos o no se guarda nada
         await _db.SaveChangesAsync();
 
         return (true, $"Reclamo {codigo} derivado a {operario.NombresApellidos}.");
+    }
+
+    // El supervisor rechaza el reclamo y deja una respuesta para el solicitante
+    public async Task<(bool Exito, string Mensaje)> RechazarAsync(
+        string codigo, string? respuesta, int idSupervisor)
+    {
+        respuesta = respuesta?.Trim() ?? string.Empty;
+
+        if (respuesta.Length < 10)
+            return (false, "Escribe una respuesta de al menos 10 caracteres para el solicitante.");
+
+        if (respuesta.Length > 500)
+            return (false, "La respuesta no puede superar los 500 caracteres.");
+
+        var reclamo = await _db.Reclamos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.CodigoReclamo == codigo);
+
+        if (reclamo == null)
+            return (false, "El reclamo no existe.");
+
+        // Patrón State: solo se puede rechazar un reclamo en evaluación
+        var contexto = new ReclamoContexto(MapearEstado(reclamo.IdEstado));
+        var resultado = contexto.Rechazar();
+
+        if (!resultado.Exito)
+            return (false, resultado.Mensaje);
+
+        int estadoAnterior = reclamo.IdEstado;
+        int estadoNuevo = MapearIdEstado(resultado.NuevoEstado!.Value);
+        DateTime ahora = DateTime.Now;
+
+        await using var transaccion = await _db.Database.BeginTransactionAsync();
+
+        // Solo actualiza si nadie más lo cambió mientras tanto
+        int actualizados = await _db.Reclamos
+            .Where(r => r.IdReclamo == reclamo.IdReclamo
+                        && r.IdEstado == estadoAnterior
+                        && r.IdOperario == null)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.IdEstado, estadoNuevo)
+                .SetProperty(r => r.FechaActualizacion, (DateTime?)ahora));
+
+        if (actualizados != 1)
+            return (false, "El reclamo cambió mientras lo rechazabas. Actualiza la lista.");
+
+        _db.Evaluaciones.Add(new EvaluacionBD
+        {
+            IdReclamo = reclamo.IdReclamo,
+            IdSupervisor = idSupervisor,
+            Resultado = "Rechazado",
+            Respuesta = respuesta,
+            FechaEvaluacion = ahora
+        });
+
+        _db.HistorialReclamos.Add(new HistorialReclamoBD
+        {
+            IdReclamo = reclamo.IdReclamo,
+            IdEstadoAnterior = estadoAnterior,
+            IdEstadoNuevo = estadoNuevo,
+            IdUsuarioModificacion = idSupervisor,
+            Comentario = "Reclamo rechazado por el supervisor.",
+            FechaCambio = ahora
+        });
+
+        await _db.SaveChangesAsync();
+        await transaccion.CommitAsync();
+
+        return (true, $"Reclamo {codigo} rechazado. El solicitante verá tu respuesta.");
     }
 
     private static EstadoReclamo MapearEstado(int idEstado) => idEstado switch
@@ -211,6 +294,8 @@ public class DerivacionService
         3 => EstadoReclamo.EnProceso,
         4 => EstadoReclamo.Resuelto,
         5 => EstadoReclamo.Cerrado,
+        6 => EstadoReclamo.Rechazado,
+        7 => EstadoReclamo.Impugnado,
         _ => throw new InvalidOperationException($"Estado {idEstado} no reconocido.")
     };
 
@@ -221,6 +306,8 @@ public class DerivacionService
         EstadoReclamo.EnProceso => 3,
         EstadoReclamo.Resuelto => 4,
         EstadoReclamo.Cerrado => 5,
+        EstadoReclamo.Rechazado => 6,
+        EstadoReclamo.Impugnado => 7,
         _ => throw new InvalidOperationException($"Estado {estado} sin equivalente en la base.")
     };
 }

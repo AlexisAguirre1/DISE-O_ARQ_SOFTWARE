@@ -90,6 +90,8 @@ namespace PyFinal_1.Controllers
                     3 => EstadoReclamo.EnProceso,
                     4 => EstadoReclamo.Resuelto,
                     5 => EstadoReclamo.Cerrado,
+                    6 => EstadoReclamo.Rechazado,
+                    7 => EstadoReclamo.Impugnado,
                     _ => EstadoReclamo.Desconocido
                 }
             }).ToList();

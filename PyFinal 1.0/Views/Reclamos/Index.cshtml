@@ -454,6 +454,18 @@
             background: #eeeafa;
         }
 
+        .rechazado 
+        {
+            color: #ba3651;
+            background: #fff0f2;
+        }
+
+        .impugnado 
+        {
+            color: #9a6700;
+            background: #fff4d6;
+        }
+
         /* BOTON DE DETALLES */
         .btn-detalle {
             border: 1px solid #e2e9f6;
@@ -873,6 +885,14 @@
                                     Cerrado
                                 </option>
 
+                                <option value="Rechazado">
+                                    Rechazado
+                                </option>
+
+                                <option value="Impugnado">
+                                    Impugnado
+                                </option>
+
                             </select>
 
                         </div>
@@ -906,6 +926,8 @@
                                         EstadoReclamo.EnEvaluacion => "evaluacion",
                                         EstadoReclamo.Resuelto => "resuelto",
                                         EstadoReclamo.Cerrado => "cerrado",
+                                        EstadoReclamo.Rechazado => "rechazado",
+                                        EstadoReclamo.Impugnado => "impugnado",
                                         _ => "registrado"
                                     };
 
@@ -916,6 +938,8 @@
                                         EstadoReclamo.EnEvaluacion => "En evaluación",
                                         EstadoReclamo.Resuelto => "Resuelto",
                                         EstadoReclamo.Cerrado => "Cerrado",
+                                        EstadoReclamo.Rechazado => "Rechazado",
+                                        EstadoReclamo.Impugnado => "Impugnado",
                                         _ => "Desconocido"
                                     };
 

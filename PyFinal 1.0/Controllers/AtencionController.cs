@@ -271,10 +271,24 @@ namespace PyFinal_1.Controllers
 
                     return RedirectToAction(nameof(Index));
                 }
+                int estadoNuevo = EnProceso;
 
-                int estadoNuevo = resolver
-                    ? Resuelto
-                    : EnProceso;
+                // PATRON STATE: EL ESTADO DECIDE SI SE PUEDE RESOLVER
+                if (resolver)
+                {
+                    var contexto = new ReclamoContexto(EstadoReclamo.EnProceso);
+                    var resultado = contexto.Resolver();
+
+                    if (!resultado.Exito ||
+                        contexto.EstadoActual != EstadoReclamo.Resuelto)
+                    {
+                        TempData["Error"] = resultado.Mensaje;
+
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    estadoNuevo = Resuelto;
+                }
 
                 DateTime? fechaActual = DateTime.Now;
 
